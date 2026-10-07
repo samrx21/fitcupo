@@ -1,0 +1,1045 @@
+{
+  "info": {
+    "name": "FitCupo · Microservicio de Clientes",
+    "description": "Endpoints del microservicio de Clientes de FitCupo. Ejecuta primero 'Registrar cliente' para que la variable clientId quede guardada.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Peticiones exitosas",
+      "item": [
+        {
+          "name": "Registrar cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Registra un cliente nuevo. Guarda el id devuelto en la variable clientId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"1037654321\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"laura.gomez@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ]
+                },
+                "description": "Registra un cliente nuevo. Guarda el id devuelto en la variable clientId.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"1037654321\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"laura.gomez@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"01a11327-dbdf-74b0-9d8a-17ae12d7cb6c\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set('clientId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?pageNumber=1&pageSize=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista paginada de clientes."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients?pageNumber=1&pageSize=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ],
+                  "query": [
+                    {
+                      "key": "pageNumber",
+                      "value": "1"
+                    },
+                    {
+                      "key": "pageSize",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Lista paginada de clientes."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"01a11327-dbdf-74b0-9d8a-17ae12d7cb6c\",\n      \"fullName\": \"Laura Gómez\",\n      \"documentType\": \"CitizenshipCard\",\n      \"documentNumber\": \"1037654321\",\n      \"email\": \"laura.gomez@correo.com\",\n      \"phone\": \"3001234567\",\n      \"status\": \"Active\"\n    }\n  ],\n  \"totalCount\": 1,\n  \"pageNumber\": 1,\n  \"pageSize\": 10,\n  \"totalPages\": 1,\n  \"hasPreviousPage\": false,\n  \"hasNextPage\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Buscar y filtrar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients?search=gomez&status=Active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "gomez"
+                },
+                {
+                  "key": "status",
+                  "value": "Active"
+                }
+              ]
+            },
+            "description": "Busca en nombre, apellido, documento o correo y filtra por estado (Active o Inactive)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients?search=gomez&status=Active",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "gomez"
+                    },
+                    {
+                      "key": "status",
+                      "value": "Active"
+                    }
+                  ]
+                },
+                "description": "Busca en nombre, apellido, documento o correo y filtra por estado (Active o Inactive)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"01a11327-dbdf-74b0-9d8a-17ae12d7cb6c\",\n      \"fullName\": \"Laura Gómez\",\n      \"documentType\": \"CitizenshipCard\",\n      \"documentNumber\": \"1037654321\",\n      \"email\": \"laura.gomez@correo.com\",\n      \"phone\": \"3001234567\",\n      \"status\": \"Active\"\n    }\n  ],\n  \"totalCount\": 1,\n  \"pageNumber\": 1,\n  \"pageSize\": 10,\n  \"totalPages\": 1,\n  \"hasPreviousPage\": false,\n  \"hasNextPage\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{clientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}"
+              ]
+            },
+            "description": "Detalle de un cliente."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/{{clientId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "{{clientId}}"
+                  ]
+                },
+                "description": "Detalle de un cliente."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"01a11327-dbdf-74b0-9d8a-17ae12d7cb6c\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"fullName\": \"Laura Gómez\",\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"1037654321\",\n  \"email\": \"laura.gomez@correo.com\",\n  \"phone\": \"3001234567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"3105551234\",\n  \"status\": \"Active\",\n  \"createdAt\": \"2026-10-06T21:39:01.7273371Z\",\n  \"updatedAt\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{clientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}"
+              ]
+            },
+            "description": "Actualiza los datos de un cliente activo. El documento no se puede cambiar.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Laura Marcela\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"laura.marcela@correo.com\",\n  \"phone\": \"3001234567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"3105551234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/{{clientId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "{{clientId}}"
+                  ]
+                },
+                "description": "Actualiza los datos de un cliente activo. El documento no se puede cambiar.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Laura Marcela\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"laura.marcela@correo.com\",\n  \"phone\": \"3001234567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"3105551234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Desactivar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{clientId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Desactiva un cliente."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/{{clientId}}/deactivate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "{{clientId}}",
+                    "deactivate"
+                  ]
+                },
+                "description": "Desactiva un cliente."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Reactivar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{clientId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}",
+                "activate"
+              ]
+            },
+            "description": "Reactiva un cliente inactivo."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/{{clientId}}/activate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "{{clientId}}",
+                    "activate"
+                  ]
+                },
+                "description": "Reactiva un cliente inactivo."
+              },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Errores de validación",
+      "item": [
+        {
+          "name": "400 · Correo inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Regla del value object Email.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"12345678\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"carlos-sin-arroba\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ]
+                },
+                "description": "Regla del value object Email.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"12345678\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"carlos-sin-arroba\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Regla de negocio incumplida\",\n  \"status\": 400,\n  \"detail\": \"El correo electrónico no tiene un formato válido.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "400 · Menor de 14 años",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Regla de edad mínima del agregado Client.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"IdentityCard\",\n  \"documentNumber\": \"1012345678\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"mateo@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2018-03-01\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ]
+                },
+                "description": "Regla de edad mínima del agregado Client.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"IdentityCard\",\n  \"documentNumber\": \"1012345678\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"mateo@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2018-03-01\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Regla de negocio incumplida\",\n  \"status\": 400,\n  \"detail\": \"El cliente debe tener al menos 14 años.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "400 · Teléfono de emergencia igual",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "El contacto de emergencia debe tener un teléfono distinto al del cliente.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"87654321\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"sara@correo.com\",\n  \"phone\": \"3001112233\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"300-111-2233\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ]
+                },
+                "description": "El contacto de emergencia debe tener un teléfono distinto al del cliente.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"87654321\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"sara@correo.com\",\n  \"phone\": \"3001112233\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"300-111-2233\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Regla de negocio incumplida\",\n  \"status\": 400,\n  \"detail\": \"El teléfono del contacto de emergencia debe ser distinto al teléfono del cliente.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "400 · Cédula con letras",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "Regla del value object Document.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"12AB34\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"carlos@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ]
+                },
+                "description": "Regla del value object Document.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"12AB34\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"carlos@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Regla de negocio incumplida\",\n  \"status\": 400,\n  \"detail\": \"El número de documento solo puede contener números.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "400 · Desactivar cliente inactivo",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{clientId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Ejecutar después de desactivar el cliente."
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/{{clientId}}/deactivate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "{{clientId}}",
+                    "deactivate"
+                  ]
+                },
+                "description": "Ejecutar después de desactivar el cliente."
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Regla de negocio incumplida\",\n  \"status\": 400,\n  \"detail\": \"El cliente ya se encuentra inactivo.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "400 · Actualizar cliente inactivo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/{{clientId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}"
+              ]
+            },
+            "description": "Ejecutar con el cliente desactivado.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Laura Marcela\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"laura.marcela@correo.com\",\n  \"phone\": \"3001234567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"3105551234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "400 Bad Request",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/{{clientId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "{{clientId}}"
+                  ]
+                },
+                "description": "Ejecutar con el cliente desactivado.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Laura Marcela\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"laura.marcela@correo.com\",\n  \"phone\": \"3001234567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"3105551234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Regla de negocio incumplida\",\n  \"status\": 400,\n  \"detail\": \"No se pueden modificar los datos de un cliente inactivo.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "409 · Documento duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "description": "El documento ya pertenece a otro cliente.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"1037654321\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"otro@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients"
+                  ]
+                },
+                "description": "El documento ya pertenece a otro cliente.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"1037654321\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"otro@correo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Conflicto con datos existentes\",\n  \"status\": 409,\n  \"detail\": \"Ya existe un cliente registrado con el documento 1037654321.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "404 · Cliente inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/clients/00000000-0000-0000-0000-000000000001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "00000000-0000-0000-0000-000000000001"
+              ]
+            },
+            "description": "El Id no existe."
+          },
+          "response": [
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/clients/00000000-0000-0000-0000-000000000001",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "clients",
+                    "00000000-0000-0000-0000-000000000001"
+                  ]
+                },
+                "description": "El Id no existe."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110\",\n  \"title\": \"Recurso no encontrado\",\n  \"status\": 404,\n  \"detail\": \"No existe un cliente con el Id 00000000-0000-0000-0000-000000000001.\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5180"
+    },
+    {
+      "key": "clientId",
+      "value": ""
+    }
+  ]
+}
