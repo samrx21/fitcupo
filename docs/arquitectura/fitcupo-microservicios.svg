@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 720" width="1120" height="720" role="img" aria-label="Arquitectura de microservicios de FitCupo: el cliente web llama al API Gateway, que enruta a Identity, Clientes, Clases, Membresías, Reservas y Notificaciones, cada uno con su base de datos. Los microservicios publican eventos en RabbitMQ; Reservas y Notificaciones los consumen.">
+  <defs>
+    <marker id="ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1B2130"/></marker>
+    <marker id="idn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2E7D4F"/></marker>
+    <marker id="cli" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B4232A"/></marker>
+    <marker id="cls" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F5FAD"/></marker>
+    <marker id="mem" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9A6B00"/></marker>
+    <marker id="res" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#C45F0A"/></marker>
+    <marker id="ntf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6A45A8"/></marker>
+    <marker id="brk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F6B6B"/></marker>
+  </defs>
+
+  <rect x="0" y="0" width="1120" height="720" fill="#FFFFFF"/>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" fill="#1B2130">
+
+  <!-- cliente y gateway -->
+  <rect x="450" y="14" width="220" height="58" rx="10" fill="#FFFFFF" stroke="#C9CED6" stroke-width="1.5"/>
+  <text x="560" y="39" text-anchor="middle" font-size="15" font-weight="700">Cliente web</text>
+  <text x="560" y="58" text-anchor="middle" font-size="11.5" fill="#5B6474">afiliados · recepción · administrador</text>
+  <line x1="560" y1="72" x2="560" y2="110" stroke="#1B2130" stroke-width="1.5" marker-end="url(#ink)"/>
+  <rect x="450" y="112" width="220" height="58" rx="10" fill="#FFFFFF" stroke="#C9CED6" stroke-width="1.5"/>
+  <text x="560" y="137" text-anchor="middle" font-size="15" font-weight="700">API Gateway</text>
+  <text x="560" y="156" text-anchor="middle" font-size="11.5" fill="#5B6474">punto único de entrada · valida JWT</text>
+  <line x1="560" y1="170" x2="560" y2="196" stroke="#1B2130" stroke-width="1.5"/>
+  <line x1="105" y1="196" x2="1015" y2="196" stroke="#1B2130" stroke-width="1.5"/>
+  <g stroke="#1B2130" stroke-width="1.5">
+    <line x1="105" y1="196" x2="105" y2="236" marker-end="url(#ink)"/>
+    <line x1="287" y1="196" x2="287" y2="236" marker-end="url(#ink)"/>
+    <line x1="469" y1="196" x2="469" y2="236" marker-end="url(#ink)"/>
+    <line x1="651" y1="196" x2="651" y2="236" marker-end="url(#ink)"/>
+    <line x1="833" y1="196" x2="833" y2="236" marker-end="url(#ink)"/>
+    <line x1="1015" y1="196" x2="1015" y2="236" marker-end="url(#ink)"/>
+  </g>
+
+  <!-- microservicios -->
+  <rect x="25" y="238" width="160" height="94" rx="10" fill="#FFFFFF" stroke="#2E7D4F" stroke-width="2"/>
+  <text x="105" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#2E7D4F">Identity</text>
+  <text x="105" y="284" text-anchor="middle" font-size="11.5" fill="#5B6474">usuarios · roles · JWT</text>
+  <text x="105" y="314" text-anchor="middle" font-size="11.5" fill="#5B6474">.NET</text>
+
+  <rect x="207" y="238" width="160" height="94" rx="10" fill="#FFFFFF" stroke="#B4232A" stroke-width="2"/>
+  <text x="287" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#B4232A">Clientes</text>
+  <text x="287" y="284" text-anchor="middle" font-size="11.5" fill="#5B6474">perfil de los afiliados</text>
+  <text x="287" y="314" text-anchor="middle" font-size="11.5" fill="#5B6474">.NET · Clean Architecture</text>
+
+  <rect x="389" y="238" width="160" height="94" rx="10" fill="#FFFFFF" stroke="#1F5FAD" stroke-width="2"/>
+  <text x="469" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#1F5FAD">Clases</text>
+  <text x="469" y="284" text-anchor="middle" font-size="11.5" fill="#5B6474">horario · instructor · aforo</text>
+  <text x="469" y="314" text-anchor="middle" font-size="11.5" fill="#5B6474">.NET</text>
+
+  <rect x="571" y="238" width="160" height="94" rx="10" fill="#FFFFFF" stroke="#9A6B00" stroke-width="2"/>
+  <text x="651" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#9A6B00">Membresías</text>
+  <text x="651" y="284" text-anchor="middle" font-size="11.5" fill="#5B6474">planes · vigencia</text>
+  <text x="651" y="314" text-anchor="middle" font-size="11.5" fill="#5B6474">.NET</text>
+
+  <rect x="753" y="238" width="160" height="94" rx="10" fill="#FFFFFF" stroke="#C45F0A" stroke-width="2"/>
+  <text x="833" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#C45F0A">Reservas</text>
+  <text x="833" y="284" text-anchor="middle" font-size="11.5" fill="#5B6474">cupos · cancelaciones</text>
+  <text x="833" y="314" text-anchor="middle" font-size="11.5" fill="#5B6474">.NET</text>
+
+  <rect x="935" y="238" width="160" height="94" rx="10" fill="#FFFFFF" stroke="#6A45A8" stroke-width="2"/>
+  <text x="1015" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#6A45A8">Notificaciones</text>
+  <text x="1015" y="284" text-anchor="middle" font-size="11.5" fill="#5B6474">correos a afiliados</text>
+  <text x="1015" y="314" text-anchor="middle" font-size="11.5" fill="#5B6474">Node.js</text>
+
+  <!-- bases de datos -->
+  <g stroke-width="1.5">
+    <line x1="105" y1="332" x2="105" y2="370" stroke="#1B2130"/>
+    <path d="M65,379 a40,9 0 0,0 80,0 a40,9 0 0,0 -80,0 v44 a40,9 0 0,0 80,0 v-44" fill="#E3F3E9" stroke="#2E7D4F"/>
+    <line x1="287" y1="332" x2="287" y2="370" stroke="#1B2130"/>
+    <path d="M247,379 a40,9 0 0,0 80,0 a40,9 0 0,0 -80,0 v44 a40,9 0 0,0 80,0 v-44" fill="#FDECEC" stroke="#B4232A"/>
+    <line x1="469" y1="332" x2="469" y2="370" stroke="#1B2130"/>
+    <path d="M429,379 a40,9 0 0,0 80,0 a40,9 0 0,0 -80,0 v44 a40,9 0 0,0 80,0 v-44" fill="#E1ECF9" stroke="#1F5FAD"/>
+    <line x1="651" y1="332" x2="651" y2="370" stroke="#1B2130"/>
+    <path d="M611,379 a40,9 0 0,0 80,0 a40,9 0 0,0 -80,0 v44 a40,9 0 0,0 80,0 v-44" fill="#FBF1D6" stroke="#9A6B00"/>
+    <line x1="833" y1="332" x2="833" y2="370" stroke="#1B2130"/>
+    <path d="M793,379 a40,9 0 0,0 80,0 a40,9 0 0,0 -80,0 v44 a40,9 0 0,0 80,0 v-44" fill="#FDEEDD" stroke="#C45F0A"/>
+    <line x1="1015" y1="332" x2="1015" y2="370" stroke="#1B2130"/>
+    <path d="M975,379 a40,9 0 0,0 80,0 a40,9 0 0,0 -80,0 v44 a40,9 0 0,0 80,0 v-44" fill="#EEE7F8" stroke="#6A45A8"/>
+  </g>
+  <g font-size="11" fill="#5B6474" text-anchor="middle">
+    <text x="105" y="412">SQL Server</text>
+    <text x="287" y="412">SQL Server</text>
+    <text x="469" y="412">SQL Server</text>
+    <text x="651" y="412">SQL Server</text>
+    <text x="833" y="412">SQL Server</text>
+    <text x="1015" y="412">MongoDB</text>
+  </g>
+
+  <!-- event broker -->
+  <rect x="380" y="560" width="360" height="76" rx="12" fill="#DDF0EF" stroke="#0F6B6B" stroke-width="2"/>
+  <text x="560" y="592" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6B6B">Event Broker</text>
+  <text x="560" y="612" text-anchor="middle" font-size="11.5" fill="#5B6474">RabbitMQ</text>
+
+  <!-- eventos publicados -->
+  <g fill="none" stroke-width="1.7" stroke-dasharray="6 4">
+    <path d="M160,332 V500 H400 V556" stroke="#2E7D4F" marker-end="url(#idn)"/>
+    <path d="M342,332 V470 H450 V556" stroke="#B4232A" marker-end="url(#cli)"/>
+    <path d="M520,332 V556" stroke="#1F5FAD" marker-end="url(#cls)"/>
+    <path d="M700,332 V556" stroke="#9A6B00" marker-end="url(#mem)"/>
+    <path d="M770,332 V520 H730 V556" stroke="#C45F0A" marker-end="url(#res)"/>
+  </g>
+  <g font-family="Consolas, Menlo, monospace" font-size="10.5">
+    <text x="168" y="492" fill="#2E7D4F">UsuarioRegistrado</text>
+    <text x="350" y="448" fill="#B4232A">ClienteRegistrado</text>
+    <text x="350" y="462" fill="#B4232A">ClienteDesactivado</text>
+    <text x="527" y="448" fill="#1F5FAD">SesionProgramada</text>
+    <text x="527" y="462" fill="#1F5FAD">SesionCancelada</text>
+    <text x="694" y="492" text-anchor="end" fill="#9A6B00">MembresiaActivada</text>
+    <text x="694" y="506" text-anchor="end" fill="#9A6B00">MembresiaVencida</text>
+    <text x="776" y="448" fill="#C45F0A">ReservaCreada</text>
+    <text x="776" y="462" fill="#C45F0A">ReservaCancelada</text>
+  </g>
+
+  <!-- eventos consumidos -->
+  <g fill="none" stroke="#0F6B6B" stroke-width="1.7" stroke-dasharray="2 4">
+    <path d="M740,585 H880 V336" marker-end="url(#brk)"/>
+    <path d="M740,615 H960 V336" marker-end="url(#brk)"/>
+  </g>
+  <g font-size="11" fill="#0F6B6B">
+    <text x="874" y="540" text-anchor="end">consume Clientes,</text>
+    <text x="874" y="554" text-anchor="end">Clases y Membresías</text>
+  </g>
+  <g font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#6A45A8">
+    <text x="967" y="452">UsuarioRegistrado</text>
+    <text x="967" y="466">ClienteRegistrado</text>
+    <text x="967" y="480">ReservaCreada</text>
+    <text x="967" y="494">ReservaCancelada</text>
+    <text x="967" y="508">MembresiaVencida</text>
+  </g>
+
+  <!-- leyenda -->
+  <line x1="25" y1="682" x2="65" y2="682" stroke="#1B2130" stroke-width="1.5"/>
+  <text x="73" y="686" font-size="12" fill="#5B6474">Petición HTTP</text>
+  <line x1="190" y1="682" x2="230" y2="682" stroke="#5B6474" stroke-width="1.7" stroke-dasharray="6 4"/>
+  <text x="238" y="686" font-size="12" fill="#5B6474">Evento publicado (color de quien lo publica)</text>
+  <line x1="530" y1="682" x2="570" y2="682" stroke="#0F6B6B" stroke-width="1.7" stroke-dasharray="2 4"/>
+  <text x="578" y="686" font-size="12" fill="#5B6474">Evento consumido</text>
+  </g>
+</svg>
