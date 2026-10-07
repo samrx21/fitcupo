@@ -16,32 +16,23 @@ Proyecto final de **Programación Distribuida**.
 El sistema se divide en microservicios independientes, cada uno con su propia base de datos.
 El cliente web entra siempre por el API Gateway y los microservicios se comunican por eventos con RabbitMQ.
 
-```mermaid
-flowchart TB
-    web["Cliente web"] --> gw["API Gateway"]
-    gw --> idn["Identity"]
-    gw --> cli["Clientes ✅ Entrega 1"]
-    gw --> cls["Clases"]
-    gw --> mem["Membresías"]
-    gw --> res["Reservas"]
-    gw --> ntf["Notificaciones"]
-    cli --> cliDb[("SQL Server")]
-    idn -. eventos .-> bus{{"RabbitMQ"}}
-    cli -. eventos .-> bus
-    cls -. eventos .-> bus
-    mem -. eventos .-> bus
-    res -. eventos .-> bus
-    bus -. eventos .-> ntf
-```
+![Arquitectura de microservicios de FitCupo](docs/arquitectura/fitcupo-microservicios.svg)
 
-| Microservicio | Estado | Responsabilidad |
-|---|---|---|
-| **Clientes** | ✅ Entrega 1 | Registro y gestión de los afiliados del gimnasio |
-| Identity | Pendiente | Usuarios, roles y tokens JWT |
-| Clases | Pendiente | Horario de clases, instructores y aforo |
-| Membresías | Pendiente | Planes y vigencia de las membresías |
-| Reservas | Pendiente | Reserva de cupos en las clases |
-| Notificaciones | Pendiente | Correos a los afiliados (Node.js) |
+| Microservicio | Estado | Responsabilidad | Publica | Consume |
+|---|---|---|---|---|
+| **Clientes** | ✅ Entrega 1 | Perfil de los afiliados del gimnasio | `ClienteRegistrado`, `ClienteDesactivado` | — |
+| Identity | Pendiente | Usuarios, roles y tokens JWT | `UsuarioRegistrado` | — |
+| Clases | Pendiente | Horario de clases, instructores y aforo | `SesionProgramada`, `SesionCancelada` | — |
+| Membresías | Pendiente | Planes y vigencia de las membresías | `MembresiaActivada`, `MembresiaVencida` | — |
+| Reservas | Pendiente | Reserva de cupos en las clases | `ReservaCreada`, `ReservaCancelada` | Eventos de Clientes, Clases y Membresías |
+| Notificaciones | Pendiente | Correos a los afiliados (Node.js) | — | `UsuarioRegistrado`, `ClienteRegistrado`, `ReservaCreada`, `ReservaCancelada`, `MembresiaVencida` |
+
+Los eventos muestran el diseño acordado. En la Entrega 1, Clientes todavía no publica en RabbitMQ:
+se conectará cuando existan los microservicios que consumen sus eventos.
+
+Clientes e Identity están separados: Identity guarda las credenciales y los roles para iniciar sesión;
+Clientes guarda el perfil del afiliado (documento, contacto, contacto de emergencia y estado).
+Así recepción puede registrar a un cliente aunque nunca cree una cuenta.
 
 ## Microservicio de Clientes
 
@@ -198,7 +189,9 @@ La entrega se publica con una rama `release/1.0.0` que se fusiona en `main` y se
 
 ```
 fitcupo/
-├── docs/postman/                    Colección de endpoints
+├── docs/
+│   ├── arquitectura/                Diagrama de microservicios
+│   └── postman/                     Colección de endpoints
 └── services/
     └── clients/                     Microservicio de Clientes
         ├── FitCupo.Clients.sln
