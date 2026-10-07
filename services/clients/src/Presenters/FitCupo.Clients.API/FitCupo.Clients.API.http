@@ -1,0 +1,140 @@
+@baseUrl = http://localhost:5180/api/clients
+# Después de crear un cliente, copia aquí el id que devuelve la respuesta
+@clientId = 00000000-0000-0000-0000-000000000000
+
+### ───────────── Peticiones exitosas ─────────────
+
+### Registrar un cliente (201 Created)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "documentType": "CitizenshipCard",
+  "documentNumber": "1037654321",
+  "firstName": "Laura",
+  "lastName": "Gómez",
+  "email": "laura.gomez@correo.com",
+  "phone": "300 123 4567",
+  "birthDate": "2000-05-14",
+  "emergencyContactName": "Ana Gómez",
+  "emergencyContactPhone": "310-555-1234"
+}
+
+### Listar clientes paginados (200 OK)
+GET {{baseUrl}}?pageNumber=1&pageSize=10
+
+### Buscar por nombre, documento o correo y filtrar por estado (200 OK)
+GET {{baseUrl}}?search=gomez&status=Active
+
+### Consultar el detalle de un cliente (200 OK)
+GET {{baseUrl}}/{{clientId}}
+
+### Actualizar un cliente (204 No Content)
+PUT {{baseUrl}}/{{clientId}}
+Content-Type: application/json
+
+{
+  "firstName": "Laura Marcela",
+  "lastName": "Gómez",
+  "email": "laura.marcela@correo.com",
+  "phone": "3001234567",
+  "birthDate": "2000-05-14",
+  "emergencyContactName": "Ana Gómez",
+  "emergencyContactPhone": "3105551234"
+}
+
+### Desactivar un cliente (204 No Content)
+PATCH {{baseUrl}}/{{clientId}}/deactivate
+
+### Reactivar un cliente (204 No Content)
+PATCH {{baseUrl}}/{{clientId}}/activate
+
+### ───────────── Errores de validación del dominio (400) ─────────────
+
+### Correo con formato inválido
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "documentType": "CitizenshipCard",
+  "documentNumber": "12345678",
+  "firstName": "Carlos",
+  "lastName": "Ruiz",
+  "email": "carlos-sin-arroba",
+  "phone": "3001112233",
+  "birthDate": "1999-01-01",
+  "emergencyContactName": "Pedro Pérez",
+  "emergencyContactPhone": "3009998877"
+}
+
+### Cliente menor de 14 años
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "documentType": "IdentityCard",
+  "documentNumber": "1012345678",
+  "firstName": "Mateo",
+  "lastName": "Ruiz",
+  "email": "mateo@correo.com",
+  "phone": "3001112233",
+  "birthDate": "2018-03-01",
+  "emergencyContactName": "Pedro Ruiz",
+  "emergencyContactPhone": "3009998877"
+}
+
+### Teléfono de emergencia igual al del cliente
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "documentType": "CitizenshipCard",
+  "documentNumber": "87654321",
+  "firstName": "Sara",
+  "lastName": "López",
+  "email": "sara@correo.com",
+  "phone": "3001112233",
+  "birthDate": "1995-01-01",
+  "emergencyContactName": "Pedro López",
+  "emergencyContactPhone": "300-111-2233"
+}
+
+### Cédula con letras
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "documentType": "CitizenshipCard",
+  "documentNumber": "12AB34",
+  "firstName": "Carlos",
+  "lastName": "Ruiz",
+  "email": "carlos@correo.com",
+  "phone": "3001112233",
+  "birthDate": "1999-01-01",
+  "emergencyContactName": "Pedro Pérez",
+  "emergencyContactPhone": "3009998877"
+}
+
+### Desactivar un cliente que ya está inactivo (ejecutar dos veces la desactivación)
+PATCH {{baseUrl}}/{{clientId}}/deactivate
+
+### ───────────── Otros errores ─────────────
+
+### Documento ya registrado (409 Conflict) — ejecutar después del primer POST
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "documentType": "CitizenshipCard",
+  "documentNumber": "1037654321",
+  "firstName": "Otro",
+  "lastName": "Cliente",
+  "email": "otro@correo.com",
+  "phone": "3001112233",
+  "birthDate": "1999-01-01",
+  "emergencyContactName": "Pedro Pérez",
+  "emergencyContactPhone": "3009998877"
+}
+
+### Cliente inexistente (404 Not Found)
+GET {{baseUrl}}/00000000-0000-0000-0000-000000000001
