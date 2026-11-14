@@ -1,5 +1,6 @@
 using FitCupo.Identity.Infrastructure.Entities;
 using FitCupo.Identity.Infrastructure.Persistence;
+using FitCupo.Identity.Infrastructure.Seeders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +13,8 @@ public static class InfrastructureServicesRegistry
     public const string CONNECTION_STRING_NAME = "DefaultConnection";
 
     /// <summary>
-    /// Registra el DbContext y ASP.NET Core Identity con sus reglas de contraseña y bloqueo.
+    /// Registra el DbContext, ASP.NET Core Identity con sus reglas de contraseña y bloqueo,
+    /// y los seeders.
     /// </summary>
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
@@ -38,6 +40,24 @@ public static class InfrastructureServicesRegistry
             .AddEntityFrameworkStores<FitCupoIdentityDbContext>()
             .AddSignInManager();
 
+        services.AddScoped<RoleSeeder>();
+        services.AddScoped<UserSeeder>();
+
         return services;
+    }
+
+    /// <summary>
+    /// Aplica las migraciones pendientes y ejecuta los seeders de roles y usuarios.
+    /// Los seeders no duplican datos: solo crean lo que todavía no existe.
+    /// </summary>
+    public static async Task InitializeDatabaseAsync(this IServiceProvider services)
+    {
+        using IServiceScope scope = services.CreateScope();
+
+        FitCupoIdentityDbContext context = scope.ServiceProvider.GetRequiredService<FitCupoIdentityDbContext>();
+        await context.Database.MigrateAsync();
+
+        await scope.ServiceProvider.GetRequiredService<RoleSeeder>().SeedAsync();
+        await scope.ServiceProvider.GetRequiredService<UserSeeder>().SeedAsync();
     }
 }

@@ -19,6 +19,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(options => options.WithTitle("FitCupo · Identity"));
+    // Crea la base de datos y ejecuta los seeders de roles y usuarios
+    await app.Services.InitializeDatabaseAsync();
 }
 
 app.MapControllers();
