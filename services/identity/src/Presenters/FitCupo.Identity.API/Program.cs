@@ -1,4 +1,5 @@
 using FitCupo.Identity.Application;
+using FitCupo.Identity.Infrastructure;
 using Scalar.AspNetCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddProblemDetails();
 
 // Cada capa registra sus propias dependencias por medio de un método de extensión
 builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 WebApplication app = builder.Build();
 
