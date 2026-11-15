@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{8D626EA8-C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FitCupo.Classes.Domain", "src\Core\FitCupo.Classes.Domain\FitCupo.Classes.Domain.csproj", "{3087F3A8-32B4-48FF-949F-3815BF18EB77}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FitCupo.Classes.Application", "src\Core\FitCupo.Classes.Application\FitCupo.Classes.Application.csproj", "{5ABB5CA4-9F18-406C-875B-BC58789A5F07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,18 @@ Global
 		{3087F3A8-32B4-48FF-949F-3815BF18EB77}.Release|x64.Build.0 = Release|Any CPU
 		{3087F3A8-32B4-48FF-949F-3815BF18EB77}.Release|x86.ActiveCfg = Release|Any CPU
 		{3087F3A8-32B4-48FF-949F-3815BF18EB77}.Release|x86.Build.0 = Release|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Debug|x64.Build.0 = Debug|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Debug|x86.Build.0 = Debug|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Release|x64.ActiveCfg = Release|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Release|x64.Build.0 = Release|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Release|x86.ActiveCfg = Release|Any CPU
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -38,5 +52,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{8D626EA8-CB54-BC41-363A-217881BEBA6E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{3087F3A8-32B4-48FF-949F-3815BF18EB77} = {8D626EA8-CB54-BC41-363A-217881BEBA6E}
+		{5ABB5CA4-9F18-406C-875B-BC58789A5F07} = {8D626EA8-CB54-BC41-363A-217881BEBA6E}
 	EndGlobalSection
 EndGlobal
