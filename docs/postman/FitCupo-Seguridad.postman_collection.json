@@ -1,0 +1,1910 @@
+{
+  "info": {
+    "name": "FitCupo · Entrega 2 · Seguridad con JWT",
+    "description": "Escenarios de autenticación y autorización de los tres microservicios.\n\n1. Ejecuta los tres servicios (scripts/run-all.ps1).\n2. Ejecuta las carpetas en orden, o toda la colección con **Run collection**: cada petición guarda los tokens e Ids que necesitan las siguientes y verifica el código HTTP esperado.\n\nUsuarios creados por los seeders (contraseña `FitCupo2026*`): admin@fitcupo.com (Admin), recepcion@fitcupo.com (Receptionist), instructor@fitcupo.com e instructor2@fitcupo.com (Instructor), afiliado@fitcupo.com (Member).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Microservicios en ejecución",
+      "item": [
+        {
+          "name": "Identity responde",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/openapi/v1.json",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "openapi",
+                "v1.json"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Clientes responde",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/openapi/v1.json",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "openapi",
+                "v1.json"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Clases responde",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/openapi/v1.json",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "openapi",
+                "v1.json"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ],
+      "description": "El documento OpenAPI es público: si responde 200, el servicio está arriba."
+    },
+    {
+      "name": "2. Usuarios y roles creados por los seeders",
+      "item": [
+        {
+          "name": "Iniciar sesión como administrador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('adminToken', pm.response.json().accessToken);",
+                  "pm.test('Devuelve un JWT', () => pm.expect(pm.response.json().accessToken.split('.')).to.have.length(3));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@fitcupo.com\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar usuarios con sus roles (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Los seeders crearon 5 usuarios', () => pm.expect(pm.response.json()).to.have.length(5));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/api/users",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrar usuarios por rol Instructor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/api/users?role=Instructor",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "Instructor"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Los roles y usuarios iniciales los crean RoleSeeder y UserSeeder al arrancar Identity."
+    },
+    {
+      "name": "3. Autenticación y emisión del JWT",
+      "item": [
+        {
+          "name": "Iniciar sesión como recepción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('receptionToken', pm.response.json().accessToken);",
+                  "pm.test('Devuelve un JWT', () => pm.expect(pm.response.json().accessToken.split('.')).to.have.length(3));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"recepcion@fitcupo.com\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Iniciar sesión como instructor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('instructorToken', pm.response.json().accessToken);",
+                  "pm.test('Devuelve un JWT', () => pm.expect(pm.response.json().accessToken.split('.')).to.have.length(3));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"instructor@fitcupo.com\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Iniciar sesión como segundo instructor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('instructor2Token', pm.response.json().accessToken);",
+                  "pm.test('Devuelve un JWT', () => pm.expect(pm.response.json().accessToken.split('.')).to.have.length(3));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"instructor2@fitcupo.com\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Iniciar sesión como afiliado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('memberToken', pm.response.json().accessToken);",
+                  "pm.test('Devuelve un JWT', () => pm.expect(pm.response.json().accessToken.split('.')).to.have.length(3));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"afiliado@fitcupo.com\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "401 · Contraseña incorrecta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('no son correctos'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@fitcupo.com\",\n  \"password\": \"ClaveIncorrecta1*\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 · Correo y contraseña vacíos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/login",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Validar el token: ¿quién soy?",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('El token es del afiliado', () => pm.expect(pm.response.json().roles).to.include('Member'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/me",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Copia el accessToken en https://jwt.io para ver los claims: sub, email, name, role, iss, aud, iat y exp."
+    },
+    {
+      "name": "4. Acceso sin token (401)",
+      "item": [
+        {
+          "name": "Clientes sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('Debes enviar un token'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Clases sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('Debes enviar un token'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/api/classes",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Identity /me sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/me",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Acceso con token válido (200)",
+      "item": [
+        {
+          "name": "Afiliado consulta el catálogo de clases",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "const yoga = pm.response.json().items.find(c => c.name === 'Yoga');",
+                  "pm.test('Existe la clase Yoga', () => pm.expect(yoga).to.exist);",
+                  "pm.collectionVariables.set('yogaClassId', yoga.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/api/classes",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Afiliado consulta el horario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recepción consulta los clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{receptionToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Autorización por roles: usuario con el rol requerido",
+      "item": [
+        {
+          "name": "Recepción registra a la afiliada (Admin, Receptionist)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 o 409', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{receptionToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Si la colección ya se ejecutó antes, responde 409 porque la afiliada ya existe.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentType\": \"CitizenshipCard\",\n  \"documentNumber\": \"1001234567\",\n  \"firstName\": \"Laura\",\n  \"lastName\": \"Gómez\",\n  \"email\": \"afiliado@fitcupo.com\",\n  \"phone\": \"300 123 4567\",\n  \"birthDate\": \"2000-05-14\",\n  \"emergencyContactName\": \"Ana Gómez\",\n  \"emergencyContactPhone\": \"310-555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Recepción busca a la afiliada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('clientId', pm.response.json().items[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients?search=afiliado@fitcupo.com",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "afiliado@fitcupo.com"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{receptionToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Afiliada consulta su propio perfil (Member)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Es su perfil', () => pm.expect(pm.response.json().email).to.eql('afiliado@fitcupo.com'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients/me",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Administrador desactiva un cliente (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients/{{clientId}}/deactivate",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}",
+                "deactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Administrador reactiva el cliente (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients/{{clientId}}/activate",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}",
+                "activate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Administrador crea una clase (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 o 409', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/classes",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rumba\",\n  \"description\": \"Baile aeróbico con ritmos latinos.\",\n  \"category\": \"Dance\",\n  \"durationMinutes\": 55,\n  \"maxCapacity\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Instructor programa una sesión (Instructor)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fecha futura aleatoria (entre 1 y 50 días, de 6 a. m. a 8 p. m. hora Colombia) para que la colección se pueda repetir sin cruces de horario",
+                  "const days = 1 + Math.floor(Math.random() * 50);",
+                  "const hourColombia = 6 + Math.floor(Math.random() * 15);",
+                  "const start = new Date(Date.now() + days * 24 * 3600 * 1000);",
+                  "start.setUTCHours(hourColombia + 5, 0, 0, 0);",
+                  "pm.collectionVariables.set('sessionStartsAt', start.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('sessionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gymClassId\": \"{{yogaClassId}}\",\n  \"room\": \"Salón 2\",\n  \"startsAt\": \"{{sessionStartsAt}}\",\n  \"capacity\": 12\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "La sesión queda a nombre del instructor del token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Instructor tomado del JWT', () => pm.expect(pm.response.json().instructorName).to.eql('Carolina Ríos'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions/{{sessionId}}",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Usuario autenticado sin el rol requerido (403)",
+      "item": [
+        {
+          "name": "Afiliado intenta listar los clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('no tiene permiso'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recepción intenta desactivar un cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients/{{clientId}}/deactivate",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients",
+                "{{clientId}}",
+                "deactivate"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{receptionToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Instructor intenta crear una clase",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/classes",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pilates\",\n  \"description\": \"Control y fuerza del centro.\",\n  \"category\": \"Strength\",\n  \"durationMinutes\": 50,\n  \"maxCapacity\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Afiliado intenta programar una sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gymClassId\": \"{{yogaClassId}}\",\n  \"room\": \"Salón 3\",\n  \"startsAt\": \"{{sessionStartsAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Recepción intenta listar los usuarios de Identity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/api/users",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{receptionToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Otro instructor intenta cancelar la sesión ajena",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('sesiones que tú dictas'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions/{{sessionId}}/cancel",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "cancel"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2Token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Quiero usar ese salón\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "description": "El token es válido (el usuario sí inició sesión), pero su rol o su usuario no tiene permiso: 403, no 401."
+    },
+    {
+      "name": "8. Token inválido o expirado (401)",
+      "item": [
+        {
+          "name": "Token expirado (firma correcta, exp en el pasado)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cryptoJs = require('crypto-js');",
+                  "const toBase64Url = words => cryptoJs.enc.Base64.stringify(words).replace(/=+$/, '').replace(/\\+/g, '-').replace(/\\//g, '_');",
+                  "const encodePart = obj => toBase64Url(cryptoJs.enc.Utf8.parse(JSON.stringify(obj)));",
+                  "const decodePart = part => JSON.parse(cryptoJs.enc.Base64.parse(part.replace(/-/g, '+').replace(/_/g, '/')).toString(cryptoJs.enc.Utf8));",
+                  "const signHs256 = (header, payload, key) => { const unsigned = encodePart(header) + '.' + encodePart(payload); return unsigned + '.' + toBase64Url(cryptoJs.HmacSHA256(unsigned, key)); };",
+                  "// Copia los claims del token del administrador y cambia las fechas: venció hace una hora",
+                  "const payload = decodePart(pm.collectionVariables.get('adminToken').split('.')[1]);",
+                  "const now = Math.floor(Date.now() / 1000);",
+                  "payload.iat = now - 7200; payload.nbf = now - 7200; payload.exp = now - 3600;",
+                  "pm.collectionVariables.set('expiredToken', signHs256({ alg: 'HS256', typ: 'JWT' }, payload, pm.collectionVariables.get('signingKey')));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('expiró'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/api/classes",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{expiredToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token modificado (el afiliado se cambia el rol a Admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cryptoJs = require('crypto-js');",
+                  "const toBase64Url = words => cryptoJs.enc.Base64.stringify(words).replace(/=+$/, '').replace(/\\+/g, '-').replace(/\\//g, '_');",
+                  "const encodePart = obj => toBase64Url(cryptoJs.enc.Utf8.parse(JSON.stringify(obj)));",
+                  "const decodePart = part => JSON.parse(cryptoJs.enc.Base64.parse(part.replace(/-/g, '+').replace(/_/g, '/')).toString(cryptoJs.enc.Utf8));",
+                  "const signHs256 = (header, payload, key) => { const unsigned = encodePart(header) + '.' + encodePart(payload); return unsigned + '.' + toBase64Url(cryptoJs.HmacSHA256(unsigned, key)); };",
+                  "// Cambia el rol dentro del token sin volver a firmarlo",
+                  "const [header, body, signature] = pm.collectionVariables.get('memberToken').split('.');",
+                  "const payload = decodePart(body);",
+                  "payload.role = 'Admin';",
+                  "pm.collectionVariables.set('tamperedToken', header + '.' + encodePart(payload) + '.' + signature);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Explica el motivo', () => pm.expect(pm.response.json().detail).to.include('firma del token no es válida'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{clientsUrl}}/api/clients",
+              "host": [
+                "{{clientsUrl}}"
+              ],
+              "path": [
+                "api",
+                "clients"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tamperedToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Token firmado con otra clave",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cryptoJs = require('crypto-js');",
+                  "const toBase64Url = words => cryptoJs.enc.Base64.stringify(words).replace(/=+$/, '').replace(/\\+/g, '-').replace(/\\//g, '_');",
+                  "const encodePart = obj => toBase64Url(cryptoJs.enc.Utf8.parse(JSON.stringify(obj)));",
+                  "const decodePart = part => JSON.parse(cryptoJs.enc.Base64.parse(part.replace(/-/g, '+').replace(/_/g, '/')).toString(cryptoJs.enc.Utf8));",
+                  "const signHs256 = (header, payload, key) => { const unsigned = encodePart(header) + '.' + encodePart(payload); return unsigned + '.' + toBase64Url(cryptoJs.HmacSHA256(unsigned, key)); };",
+                  "const payload = decodePart(pm.collectionVariables.get('adminToken').split('.')[1]);",
+                  "pm.collectionVariables.set('foreignToken', signHs256({ alg: 'HS256', typ: 'JWT' }, payload, 'clave-de-un-atacante-que-no-conoce-la-de-FitCupo'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{classesUrl}}/api/classes",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{foreignToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Texto que no es un JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{identityUrl}}/api/auth/me",
+              "host": [
+                "{{identityUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "esto.no.es-un-token",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "El token se rechaza en cada microservicio: se valida la firma, el emisor, la audiencia y la vigencia."
+    },
+    {
+      "name": "9. Reglas de negocio con el usuario del token",
+      "item": [
+        {
+          "name": "409 · Salón ocupado en ese horario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructor2Token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gymClassId\": \"{{yogaClassId}}\",\n  \"room\": \"Salón 2\",\n  \"startsAt\": \"{{sessionStartsAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "El instructor cancela su propia sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions/{{sessionId}}/cancel",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "cancel"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{instructorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Incapacidad médica del instructor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 · La sesión ya está cancelada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{classesUrl}}/api/sessions/{{sessionId}}/cancel",
+              "host": [
+                "{{classesUrl}}"
+              ],
+              "path": [
+                "api",
+                "sessions",
+                "{{sessionId}}",
+                "cancel"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cancelación repetida\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "identityUrl",
+      "value": "http://localhost:5170"
+    },
+    {
+      "key": "clientsUrl",
+      "value": "http://localhost:5180"
+    },
+    {
+      "key": "classesUrl",
+      "value": "http://localhost:5190"
+    },
+    {
+      "key": "password",
+      "value": "FitCupo2026*"
+    },
+    {
+      "key": "signingKey",
+      "value": "FitCupo-clave-de-desarrollo-para-firmar-JWT-2026"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "receptionToken",
+      "value": ""
+    },
+    {
+      "key": "instructorToken",
+      "value": ""
+    },
+    {
+      "key": "instructor2Token",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    },
+    {
+      "key": "expiredToken",
+      "value": ""
+    },
+    {
+      "key": "tamperedToken",
+      "value": ""
+    },
+    {
+      "key": "foreignToken",
+      "value": ""
+    },
+    {
+      "key": "yogaClassId",
+      "value": ""
+    },
+    {
+      "key": "clientId",
+      "value": ""
+    },
+    {
+      "key": "sessionId",
+      "value": ""
+    },
+    {
+      "key": "sessionStartsAt",
+      "value": ""
+    }
+  ]
+}
