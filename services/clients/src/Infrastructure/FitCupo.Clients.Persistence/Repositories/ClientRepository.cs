@@ -21,6 +21,10 @@ public sealed class ClientRepository(ClientsDbContext context) : Repository<Clie
             client => client.Email.Value == email && client.Id != excludedClientId,
             cancellationToken);
 
+    public async Task<Client?> GetByEmailAsync(string email, CancellationToken cancellationToken = default) =>
+        await Context.Clients.AsNoTracking()
+            .FirstOrDefaultAsync(client => client.Email.Value == email, cancellationToken);
+
     public async Task<PaginationResponse<Client>> GetPagedListAsync(
         PaginationRequest pagination,
         string? search,

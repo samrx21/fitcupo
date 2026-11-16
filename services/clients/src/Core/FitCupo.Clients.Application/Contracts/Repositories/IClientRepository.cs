@@ -19,6 +19,8 @@ public interface IClientRepository : IRepository<Client>
     Task<bool> ExistsByEmailAsync(
         string email, Guid? excludedClientId = null, CancellationToken cancellationToken = default);
 
+    Task<Client?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+
     Task<PaginationResponse<Client>> GetPagedListAsync(
         PaginationRequest pagination,
         string? search,

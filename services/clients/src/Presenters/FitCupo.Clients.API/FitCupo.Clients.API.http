@@ -1,11 +1,37 @@
 @baseUrl = http://localhost:5180/api/clients
+@identityUrl = http://localhost:5170
+@password = FitCupo2026*
 # Después de crear un cliente, copia aquí el id que devuelve la respuesta
 @clientId = 00000000-0000-0000-0000-000000000000
+
+### ───────────── Inicio de sesión (ejecutar primero) ─────────────
+# Desde la Entrega 2 todos los endpoints exigen un JWT de Identity (http://localhost:5170)
+
+### Administrador: puede usar todos los endpoints de clientes
+# @name loginAdmin
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### Afiliado: solo puede consultar su propio perfil
+# @name loginMember
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "afiliado@fitcupo.com",
+  "password": "{{password}}"
+}
 
 ### ───────────── Peticiones exitosas ─────────────
 
 ### Registrar un cliente (201 Created)
 POST {{baseUrl}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -22,15 +48,19 @@ Content-Type: application/json
 
 ### Listar clientes paginados (200 OK)
 GET {{baseUrl}}?pageNumber=1&pageSize=10
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 
 ### Buscar por nombre, documento o correo y filtrar por estado (200 OK)
 GET {{baseUrl}}?search=gomez&status=Active
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 
 ### Consultar el detalle de un cliente (200 OK)
 GET {{baseUrl}}/{{clientId}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 
 ### Actualizar un cliente (204 No Content)
 PUT {{baseUrl}}/{{clientId}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -45,14 +75,17 @@ Content-Type: application/json
 
 ### Desactivar un cliente (204 No Content)
 PATCH {{baseUrl}}/{{clientId}}/deactivate
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 
 ### Reactivar un cliente (204 No Content)
 PATCH {{baseUrl}}/{{clientId}}/activate
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 
 ### ───────────── Errores de validación del dominio (400) ─────────────
 
 ### Correo con formato inválido
 POST {{baseUrl}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -69,6 +102,7 @@ Content-Type: application/json
 
 ### Cliente menor de 14 años
 POST {{baseUrl}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -85,6 +119,7 @@ Content-Type: application/json
 
 ### Teléfono de emergencia igual al del cliente
 POST {{baseUrl}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -101,6 +136,7 @@ Content-Type: application/json
 
 ### Cédula con letras
 POST {{baseUrl}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -117,11 +153,13 @@ Content-Type: application/json
 
 ### Desactivar un cliente que ya está inactivo (ejecutar dos veces la desactivación)
 PATCH {{baseUrl}}/{{clientId}}/deactivate
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 
 ### ───────────── Otros errores ─────────────
 
 ### Documento ya registrado (409 Conflict) — ejecutar después del primer POST
 POST {{baseUrl}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
@@ -138,3 +176,17 @@ Content-Type: application/json
 
 ### Cliente inexistente (404 Not Found)
 GET {{baseUrl}}/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
+
+### ───────────── Seguridad ─────────────
+
+### Afiliado consulta su propio perfil (200 OK si recepción ya lo registró con su correo)
+GET {{baseUrl}}/me
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Sin token (401 Unauthorized)
+GET {{baseUrl}}
+
+### Afiliado intenta listar los clientes (403 Forbidden: requiere Admin o Receptionist)
+GET {{baseUrl}}
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}

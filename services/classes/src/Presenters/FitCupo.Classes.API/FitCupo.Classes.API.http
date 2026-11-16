@@ -1,0 +1,199 @@
+@identityUrl = http://localhost:5170
+@password = FitCupo2026*
+@classesUrl = http://localhost:5190
+# Clase Yoga creada con la migración (datos semilla)
+@yogaClassId = 019a4a00-0000-7000-8000-000000000002
+# Después de programar una sesión, copia aquí el id que devuelve la respuesta
+@sessionId = 00000000-0000-0000-0000-000000000000
+
+### ───────────── Inicio de sesión (ejecutar primero) ─────────────
+
+### Administrador
+# @name loginAdmin
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### Instructor
+# @name loginInstructor
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "instructor@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### Segundo instructor
+# @name loginInstructor2
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "instructor2@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### Afiliado
+# @name loginMember
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "afiliado@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### ───────────── Catálogo de clases ─────────────
+
+### Listar clases (200 OK, cualquier usuario autenticado)
+GET {{classesUrl}}/api/classes?pageNumber=1&pageSize=10
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Filtrar por categoría (200 OK)
+GET {{classesUrl}}/api/classes?category=Yoga
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Consultar una clase (200 OK)
+GET {{classesUrl}}/api/classes/{{yogaClassId}}
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Crear una clase (201 Created, solo Admin)
+POST {{classesUrl}}/api/classes
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Rumba",
+  "description": "Baile aeróbico con ritmos latinos.",
+  "category": "Dance",
+  "durationMinutes": 55,
+  "maxCapacity": 25
+}
+
+### Actualizar una clase (204 No Content, solo Admin)
+PUT {{classesUrl}}/api/classes/{{yogaClassId}}
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Yoga",
+  "description": "Posturas, respiración y meditación para todos los niveles.",
+  "category": "Yoga",
+  "durationMinutes": 60,
+  "maxCapacity": 18
+}
+
+### ───────────── Horario de sesiones ─────────────
+
+### Consultar el horario de los próximos 7 días (200 OK)
+GET {{classesUrl}}/api/sessions
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Consultar el horario por rango de fechas y clase (200 OK)
+GET {{classesUrl}}/api/sessions?from=2026-11-15T00:00:00-05:00&to=2026-12-31T23:59:59-05:00&gymClassId={{yogaClassId}}
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Programar una sesión (201 Created, solo Instructor). Usa una fecha futura
+POST {{classesUrl}}/api/sessions
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "gymClassId": "{{yogaClassId}}",
+  "room": "Salón 2",
+  "startsAt": "2026-12-01T18:00:00-05:00",
+  "capacity": 12
+}
+
+### Consultar una sesión (200 OK)
+GET {{classesUrl}}/api/sessions/{{sessionId}}
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Cancelar su propia sesión (204 No Content)
+PATCH {{classesUrl}}/api/sessions/{{sessionId}}/cancel
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Incapacidad médica del instructor"
+}
+
+### ───────────── Seguridad ─────────────
+
+### Sin token (401 Unauthorized)
+GET {{classesUrl}}/api/classes
+
+### Instructor intenta crear una clase (403 Forbidden: requiere Admin)
+POST {{classesUrl}}/api/classes
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Pilates",
+  "description": "Control y fuerza del centro.",
+  "category": "Strength",
+  "durationMinutes": 50,
+  "maxCapacity": 10
+}
+
+### Afiliado intenta programar una sesión (403 Forbidden: requiere Instructor)
+POST {{classesUrl}}/api/sessions
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "gymClassId": "{{yogaClassId}}",
+  "room": "Salón 3",
+  "startsAt": "2026-12-01T18:00:00-05:00"
+}
+
+### Otro instructor intenta cancelar la sesión (403 Forbidden: no es el dueño)
+PATCH {{classesUrl}}/api/sessions/{{sessionId}}/cancel
+Authorization: Bearer {{loginInstructor2.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Quiero usar ese salón"
+}
+
+### Token expirado (401 Unauthorized). Firmado con la clave de desarrollo; venció el 31 de diciembre de 2025
+GET {{classesUrl}}/api/classes
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJGaXRDdXBvIiwiaXNzIjoiRml0Q3Vwby5JZGVudGl0eSIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImVtYWlsIjoiYWRtaW5AZml0Y3Vwby5jb20iLCJuYW1lIjoiQW5kcmVhIFJ1aXoiLCJyb2xlIjoiQWRtaW4iLCJpYXQiOjE3NjcyMTg0MDAsIm5iZiI6MTc2NzIxODQwMCwiZXhwIjoxNzY3MjIyMDAwfQ.tnY4gDeyT1hLEznKJJ831ElzzyxBf79VjEmOdJwo5ro
+
+### ───────────── Reglas de negocio ─────────────
+
+### Sesión en el pasado (400 Bad Request)
+POST {{classesUrl}}/api/sessions
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "gymClassId": "{{yogaClassId}}",
+  "room": "Salón 2",
+  "startsAt": "2025-01-01T18:00:00-05:00"
+}
+
+### Cupo mayor al aforo de la clase (400 Bad Request)
+POST {{classesUrl}}/api/sessions
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "gymClassId": "{{yogaClassId}}",
+  "room": "Salón 4",
+  "startsAt": "2026-12-02T07:00:00-05:00",
+  "capacity": 100
+}
+
+### Rango de fechas invertido (400 Bad Request)
+GET {{classesUrl}}/api/sessions?from=2026-12-10T00:00:00Z&to=2026-12-01T00:00:00Z
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Clase inexistente (404 Not Found)
+GET {{classesUrl}}/api/classes/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}

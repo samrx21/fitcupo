@@ -1,0 +1,73 @@
+@identityUrl = http://localhost:5170
+@password = FitCupo2026*
+
+# Usuarios creados por los seeders. Todos tienen la contraseña FitCupo2026*
+# Las peticiones con token usan la respuesta del login: {{loginAdmin.response.body.$.accessToken}}
+# (Visual Studio 2022 17.12 o superior, o la extensión REST Client de VS Code)
+
+### ───────────── Autenticación y emisión del JWT ─────────────
+
+### Iniciar sesión como administrador (200 OK con el JWT)
+# @name loginAdmin
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### Iniciar sesión como recepción (200 OK)
+# @name loginReception
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "recepcion@fitcupo.com",
+  "password": "{{password}}"
+}
+
+### ¿Quién soy? Valida el token y devuelve el usuario (200 OK)
+GET {{identityUrl}}/api/auth/me
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
+
+### ───────────── Usuarios y roles de los seeders ─────────────
+
+### Listar usuarios con sus roles (200 OK, solo Admin)
+GET {{identityUrl}}/api/users
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
+
+### Filtrar usuarios por rol (200 OK)
+GET {{identityUrl}}/api/users?role=Instructor
+Authorization: Bearer {{loginAdmin.response.body.$.accessToken}}
+
+### ───────────── Errores ─────────────
+
+### Contraseña incorrecta (401 Unauthorized)
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fitcupo.com",
+  "password": "ClaveIncorrecta1*"
+}
+
+### Correo y contraseña vacíos (400 Bad Request)
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "",
+  "password": ""
+}
+
+### Consultar /me sin token (401 Unauthorized)
+GET {{identityUrl}}/api/auth/me
+
+### Recepción intenta listar los usuarios (403 Forbidden: no tiene el rol Admin)
+GET {{identityUrl}}/api/users
+Authorization: Bearer {{loginReception.response.body.$.accessToken}}
+
+### Token inválido (401 Unauthorized)
+GET {{identityUrl}}/api/auth/me
+Authorization: Bearer esto.no.es-un-token
