@@ -1,6 +1,9 @@
+using FitCupo.Identity.Application.Contracts.Identity;
 using FitCupo.Identity.Infrastructure.Entities;
 using FitCupo.Identity.Infrastructure.Persistence;
 using FitCupo.Identity.Infrastructure.Seeders;
+using FitCupo.Identity.Infrastructure.Services;
+using FitCupo.Identity.Infrastructure.Tokens;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,7 +17,7 @@ public static class InfrastructureServicesRegistry
 
     /// <summary>
     /// Registra el DbContext, ASP.NET Core Identity con sus reglas de contraseña y bloqueo,
-    /// y los seeders.
+    /// los seeders y el generador de JWT.
     /// </summary>
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
@@ -43,6 +46,9 @@ public static class InfrastructureServicesRegistry
         services.AddScoped<RoleSeeder>();
         services.AddScoped<UserSeeder>();
 
+        services.AddJwtTokenGenerator(configuration);
+        services.AddScoped<IIdentityService, IdentityService>();
+
         return services;
     }
 
@@ -59,5 +65,20 @@ public static class InfrastructureServicesRegistry
 
         await scope.ServiceProvider.GetRequiredService<RoleSeeder>().SeedAsync();
         await scope.ServiceProvider.GetRequiredService<UserSeeder>().SeedAsync();
+    }
+
+    private static void AddJwtTokenGenerator(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SECTION_NAME))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Falta Jwt:Issuer.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Falta Jwt:Audience.")
+            .Validate(
+                options => options.SigningKey?.Length >= JwtOptions.MIN_SIGNING_KEY_LENGTH,
+                $"Jwt:SigningKey debe tener al menos {JwtOptions.MIN_SIGNING_KEY_LENGTH} caracteres.")
+            .Validate(options => options.ExpirationMinutes > 0, "Jwt:ExpirationMinutes debe ser mayor que cero.")
+            .ValidateOnStart();
+
+        services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
     }
 }
