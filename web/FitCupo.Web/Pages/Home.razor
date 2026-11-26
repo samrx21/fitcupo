@@ -14,6 +14,15 @@
             <a class="card" href="horario"><h2>Reservar una clase</h2><p class="muted">Mira el horario con los cupos disponibles y reserva.</p></a>
             <a class="card" href="mis-reservas"><h2>Mis reservas</h2><p class="muted">Consulta o cancela tus reservas.</p></a>
         }
+        @if (context.User.IsInRole(Roles.RECEPTIONIST) || context.User.IsInRole(Roles.ADMIN))
+        {
+            <a class="card" href="clientes"><h2>Clientes</h2><p class="muted">Registra y consulta a los afiliados del gimnasio.</p></a>
+            <a class="card" href="reservas"><h2>Reservas</h2><p class="muted">Reserva para un cliente y gestiona las reservas.</p></a>
+        }
+        @if (context.User.IsInRole(Roles.INSTRUCTOR))
+        {
+            <a class="card" href="mis-sesiones"><h2>Mis sesiones</h2><p class="muted">Programa sesiones y mira quién está inscrito.</p></a>
+        }
         <a class="card" href="clases"><h2>Clases</h2><p class="muted">Catálogo de clases grupales del gimnasio.</p></a>
         <a class="card" href="horario"><h2>Horario</h2><p class="muted">Sesiones de los próximos días con sus cupos.</p></a>
     </div>

@@ -9,6 +9,15 @@
             {
                 <NavLink href="mis-reservas">Mis reservas</NavLink>
             }
+            @if (context.User.IsInRole(Roles.ADMIN) || context.User.IsInRole(Roles.RECEPTIONIST))
+            {
+                <NavLink href="clientes">Clientes</NavLink>
+                <NavLink href="reservas">Reservas</NavLink>
+            }
+            @if (context.User.IsInRole(Roles.INSTRUCTOR))
+            {
+                <NavLink href="mis-sesiones">Mis sesiones</NavLink>
+            }
         </nav>
     </Authorized>
 </AuthorizeView>
