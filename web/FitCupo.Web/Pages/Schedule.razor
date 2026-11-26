@@ -1,0 +1,165 @@
+@page "/horario"
+@attribute [Authorize]
+@inject ApiClient Api
+
+<PageTitle>Horario · FitCupo</PageTitle>
+
+<h1>Horario de clases</h1>
+<p class="subtitle">
+    Reservas consulta el horario al microservicio de Clases y le suma los cupos ocupados.
+</p>
+
+<div class="toolbar">
+    <button class="secondary" @onclick="() => MoveAsync(-7)" disabled="@(weekOffset == 0)">← Semana anterior</button>
+    <strong>@Format.Day(From.UtcDateTime) – @Format.Day(To.UtcDateTime)</strong>
+    <button class="secondary" @onclick="() => MoveAsync(7)">Semana siguiente →</button>
+    <button class="secondary" @onclick="LoadAsync">Actualizar</button>
+</div>
+
+<ErrorAlert Error="error" />
+<SuccessAlert Message="@message" />
+
+@if (sessions is null && error is null)
+{
+    <p class="loading">Cargando horario…</p>
+}
+else if (sessions is not null && sessions.Count == 0)
+{
+    <div class="card empty">No hay sesiones programadas en estas fechas.</div>
+}
+else if (sessions is not null)
+{
+    @foreach (IGrouping<DateTime, AvailableSession> day in sessions.GroupBy(session => Format.ToLocal(session.StartsAt).Date))
+    {
+        <div class="card">
+            <h2>@Format.Day(day.First().StartsAt)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Clase</th>
+                        <th>Instructor</th>
+                        <th>Salón</th>
+                        <th>Cupos</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (AvailableSession session in day)
+                    {
+                        <tr>
+                            <td>@Format.Time(session.StartsAt) – @Format.Time(session.EndsAt)</td>
+                            <td><strong>@session.GymClassName</strong> <span class="muted">· @Format.Category(session.Category)</span></td>
+                            <td>@session.InstructorName</td>
+                            <td>@session.Room</td>
+                            <td>
+                                @if (!session.IsScheduled)
+                                {
+                                    <span class="badge off" title="@session.CancellationReason">Cancelada</span>
+                                }
+                                else
+                                {
+                                    <span class="spots @(session.AvailableSpots == 0 ? "full" : "")">@session.AvailableSpots</span>
+                                    <span class="muted"> de @session.Capacity</span>
+                                }
+                            </td>
+                            <td>
+                                <AuthorizeView Roles="@Roles.MEMBER">
+                                    @if (session.MyBookingId is { } bookingId)
+                                    {
+                                        <div class="actions">
+                                            <span class="badge ok">Reservada</span>
+                                            <button class="danger small" disabled="@busy" @onclick="() => CancelAsync(bookingId)">Cancelar</button>
+                                        </div>
+                                    }
+                                    else if (session.IsScheduled && !session.HasStarted)
+                                    {
+                                        <button class="small" disabled="@(busy || session.AvailableSpots == 0)" @onclick="() => BookAsync(session)">
+                                            @(session.AvailableSpots == 0 ? "Sin cupos" : "Reservar")
+                                        </button>
+                                    }
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private List<AvailableSession>? sessions;
+    private ApiException? error;
+    private string? message;
+    private bool busy;
+    private int weekOffset;
+
+    // Desde hoy a la medianoche (hora local) más las semanas que se haya avanzado
+    private DateTimeOffset From => new(DateTime.Today.AddDays(weekOffset));
+
+    private DateTimeOffset To => From.AddDays(7).AddSeconds(-1);
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task MoveAsync(int days)
+    {
+        weekOffset = Math.Max(0, weekOffset + days);
+        message = null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        try
+        {
+            string from = Uri.EscapeDataString(From.ToString("O"));
+            string to = Uri.EscapeDataString(To.ToString("O"));
+            sessions = await Api.GetAsync<List<AvailableSession>>($"api/bookings/schedule?from={from}&to={to}");
+        }
+        catch (ApiException exception)
+        {
+            sessions = null;
+            error = exception;
+        }
+    }
+
+    private async Task BookAsync(AvailableSession session)
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PostAsync("api/bookings", new { sessionId = session.SessionId });
+            message = $"¡Listo! Reservaste {session.GymClassName} el {Format.DateTime(session.StartsAt)}.";
+        });
+    }
+
+    private async Task CancelAsync(Guid bookingId)
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PatchAsync($"api/bookings/{bookingId}/cancel");
+            message = "Cancelaste tu reserva y el cupo quedó libre.";
+        });
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            await action();
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
