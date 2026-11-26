@@ -1,0 +1,29 @@
+@gatewayUrl = http://localhost:5100
+
+# El API Gateway es la única dirección que usa la interfaz web.
+# YARP reenvía cada ruta al microservicio que la atiende, con el mismo encabezado Authorization.
+
+### Información del Gateway y sus rutas
+GET {{gatewayUrl}}/
+
+### Estado de los cuatro microservicios (el Gateway los consulta en este momento)
+GET {{gatewayUrl}}/api/status
+
+### Login por el Gateway → Identity
+# @name login
+POST {{gatewayUrl}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "afiliado@fitcupo.com", "password": "FitCupo2026*" }
+
+### Catálogo por el Gateway → Clases
+GET {{gatewayUrl}}/api/classes
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Perfil del afiliado por el Gateway → Clientes
+GET {{gatewayUrl}}/api/clients/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Horario con cupos por el Gateway → Reservas → Clases
+GET {{gatewayUrl}}/api/bookings/schedule
+Authorization: Bearer {{login.response.body.$.accessToken}}
