@@ -3,38 +3,114 @@
 Plataforma de reservas de clases grupales para un gimnasio, construida con microservicios.
 Proyecto final de **Programación Distribuida**.
 
-| Integrante | Entrega 1 | Entrega 2 |
-|---|---|---|
-| Samuel Metaute Restrepo | Estructura de la solución y capa de Dominio | Identity: ASP.NET Core Identity, usuarios, roles y seeders |
-| Juana Ospina | Capa de Aplicación: mediador, paginación y contratos | Identity: inicio de sesión y emisión del JWT |
-| David Viloria | Casos de uso (commands y queries) | Clases: dominio y casos de uso |
-| Victor Manuel David | Capa de Persistencia (EF Core y SQL Server) | Clases: persistencia y API protegida con JWT |
-| Carlos Arango | Capa de Presentación (API) y documentación | Clientes protegido por roles y documentación |
+| Integrante | Entrega 1 | Entrega 2 | Entrega final (MVP) |
+|---|---|---|---|
+| Samuel Metaute Restrepo | Estructura de la solución y capa de Dominio | Identity: ASP.NET Core Identity, usuarios, roles y seeders | Reservas: dominio y casos de uso |
+| Juana Ospina | Capa de Aplicación: mediador, paginación y contratos | Identity: inicio de sesión y emisión del JWT | Comunicación síncrona entre microservicios y API Gateway |
+| David Viloria | Casos de uso (commands y queries) | Clases: dominio y casos de uso | Interfaz web: base, inicio de sesión y reservas del afiliado |
+| Victor Manuel David | Capa de Persistencia (EF Core y SQL Server) | Clases: persistencia y API protegida con JWT | Reservas: persistencia y API |
+| Carlos Arango | Capa de Presentación (API) y documentación | Clientes protegido por roles y documentación | Interfaz web: recepción e instructor, y documentación |
+
+## MVP: qué hace FitCupo
+
+| Rol | Qué puede hacer en la interfaz web |
+|---|---|
+| **Afiliado** (`afiliado@fitcupo.com`) | Ver el catálogo y el horario con los cupos disponibles, reservar una clase, ver sus reservas y cancelarlas |
+| **Recepción** (`recepcion@fitcupo.com`) | Registrar clientes, buscarlos, reservar un cupo para un cliente y cancelar reservas |
+| **Instructor** (`instructor@fitcupo.com`) | Programar sesiones de sus clases, cancelarlas y ver quién se inscribió |
+| **Administrador** (`admin@fitcupo.com`) | Todo lo de recepción, además de activar y desactivar clientes |
+
+Todos los usuarios tienen la contraseña **`FitCupo2026*`**. La pantalla de inicio de sesión tiene botones para llenar cada usuario.
+
+### Flujo principal
+
+1. **Recepción** registra a Laura Gómez como cliente con el correo `afiliado@fitcupo.com` (botón *Llenar con datos del afiliado de prueba*).
+2. **El instructor** programa una sesión de Spinning para mañana en *Mis sesiones*.
+3. **La afiliada** abre *Horario*, ve la sesión con sus cupos y la reserva. El cupo baja en uno.
+4. **El instructor** abre *Inscritos* y ve a Laura en la lista.
+5. **La afiliada** cancela su reserva en *Mis reservas* y el cupo se libera.
 
 ## Arquitectura general
 
-El sistema se divide en microservicios independientes, cada uno con su propia base de datos.
-El cliente web entra siempre por el API Gateway y los microservicios se comunican por eventos con RabbitMQ.
+Cada microservicio tiene su propia base de datos y valida el JWT por su cuenta.
+La interfaz web solo conoce al **API Gateway**, que reenvía cada petición al microservicio que la atiende.
+**Reservas** se comunica de forma **síncrona (HTTP)** con **Clientes** y **Clases** para validar cada reserva.
 
-![Arquitectura de microservicios de FitCupo](docs/arquitectura/fitcupo-microservicios.svg)
+```mermaid
+flowchart LR
+    web["Interfaz web<br/>Blazor WebAssembly :5300"] -->|HTTP + JWT| gw["API Gateway<br/>YARP :5100"]
+    gw --> id["Identity :5170"]
+    gw --> cli["Clientes :5180"]
+    gw --> cla["Clases :5190"]
+    gw --> res["Reservas :5200"]
+    res -->|"GET /api/clients/me<br/>GET /api/clients/{id}"| cli
+    res -->|"GET /api/sessions/{id}<br/>GET /api/sessions"| cla
+    id --- dbi[("FitCupoIdentity")]
+    cli --- dbc[("FitCupoClients")]
+    cla --- dbk[("FitCupoClasses")]
+    res --- dbr[("FitCupoBookings")]
+```
 
-| Microservicio | Estado | Responsabilidad | Puerto | Publica | Consume |
-|---|---|---|---|---|---|
-| **Clientes** | ✅ Entrega 1 | Perfil de los afiliados del gimnasio | 5180 | `ClienteRegistrado`, `ClienteDesactivado` | — |
-| **Identity** | ✅ Entrega 2 | Usuarios, roles y tokens JWT | 5170 | `UsuarioRegistrado` | — |
-| **Clases** | ✅ Entrega 2 | Catálogo de clases y horario de sesiones con instructor y aforo | 5190 | `SesionProgramada`, `SesionCancelada` | — |
-| Membresías | Pendiente | Planes y vigencia de las membresías | — | `MembresiaActivada`, `MembresiaVencida` | — |
-| Reservas | Pendiente | Reserva de cupos en las clases | — | `ReservaCreada`, `ReservaCancelada` | Eventos de Clientes, Clases y Membresías |
-| Notificaciones | Pendiente | Correos a los afiliados (Node.js) | — | — | `UsuarioRegistrado`, `ClienteRegistrado`, `ReservaCreada`, `ReservaCancelada`, `MembresiaVencida` |
-
-Los eventos muestran el diseño acordado; todavía no se publican en RabbitMQ.
-En esta entrega no hay API Gateway: **cada microservicio valida el JWT por su cuenta**, como pide el enunciado.
+| Componente | Estado | Responsabilidad | Puerto | Base de datos |
+|---|---|---|---|---|
+| **Clientes** | ✅ Entrega 1 | Perfil de los afiliados del gimnasio | 5180 | `FitCupoClients` |
+| **Identity** | ✅ Entrega 2 | Usuarios, roles y tokens JWT | 5170 | `FitCupoIdentity` |
+| **Clases** | ✅ Entrega 2 | Catálogo de clases y horario de sesiones con instructor y aforo | 5190 | `FitCupoClasses` |
+| **Reservas** | ✅ Entrega final | Reserva de cupos; consulta a Clientes y Clases | 5200 | `FitCupoBookings` |
+| **API Gateway** | ✅ Entrega final | Punto de entrada único con YARP y estado de los microservicios | 5100 | — |
+| **Interfaz web** | ✅ Entrega final | Aplicación Blazor WebAssembly para los cuatro roles | 5300 | — |
+| Membresías | Fuera del MVP | Planes y vigencia de las membresías | — | — |
+| Notificaciones | Fuera del MVP | Correos a los afiliados con eventos de RabbitMQ | — | — |
 
 Clientes e Identity están separados: Identity guarda las credenciales y los roles para iniciar sesión;
 Clientes guarda el perfil del afiliado (documento, contacto, contacto de emergencia y estado).
 Los dos se relacionan por el correo: el afiliado ve su perfil en `GET /api/clients/me` con el correo de su token.
 
-## Seguridad con JWT (Entrega 2)
+## Comunicación síncrona entre microservicios
+
+Para crear una reserva, Reservas **no confía en lo que envía el navegador**: pregunta a los dueños de cada dato.
+
+```mermaid
+sequenceDiagram
+    actor A as Afiliado
+    participant G as API Gateway :5100
+    participant R as Reservas :5200
+    participant C as Clientes :5180
+    participant K as Clases :5190
+    A->>G: POST /api/bookings { sessionId } + JWT
+    G->>R: reenvía la petición con el mismo JWT
+    R->>C: GET /api/clients/me (con el JWT del afiliado)
+    C-->>R: 200 cliente (Id, nombre, correo, estado)
+    R->>K: GET /api/sessions/{sessionId}
+    K-->>R: 200 sesión (fecha, salón, instructor, cupo, estado)
+    R->>R: Valida reglas: cliente activo, sesión programada y futura,<br/>cupo disponible, sin reserva repetida ni cruce de horario
+    R-->>G: 201 Created { id }
+    G-->>A: 201 Created
+```
+
+| Situación | Lo que responde Reservas |
+|---|---|
+| El afiliado no está registrado en Clientes | 404: *Todavía no estás registrado como cliente del gimnasio…* |
+| El cliente está inactivo en Clientes | 400: *El cliente … está inactivo y no puede reservar clases.* |
+| La sesión no existe en Clases | 404 |
+| La sesión fue cancelada en Clases o ya empezó | 400 |
+| La sesión no tiene cupos | 400: *La sesión de Yoga no tiene cupos disponibles (2 de 2 ocupados).* |
+| El cliente ya reservó esa sesión u otra a la misma hora | 409 |
+| **Clases o Clientes no responden** (detenidos o tardan más de 5 s) | **503**: *El microservicio de Clases no está disponible…* |
+
+Cómo está hecho (`services/bookings/src/Infrastructure/FitCupo.Bookings.Infrastructure`):
+
+- **`IHttpClientFactory` con clientes tipados**: `ClassesService` y `ClientsService` implementan los contratos `IClassesService` e `IClientsService` de la capa de aplicación. Los casos de uso no saben que la información viene de otra API.
+- **`ForwardAuthorizationHandler`** copia el JWT de la petición original en la llamada a Clases y Clientes; cada microservicio lo valida y aplica sus permisos. Por eso `GET /api/clients/me` devuelve el perfil del afiliado dueño del token.
+- **`OutgoingRequestLoggingHandler`** escribe en la consola de Reservas cada llamada con su resultado y duración, por ejemplo:
+  `Reservas → GET http://localhost:5180/api/clients/me respondió 200 en 13 ms`.
+- **`RemoteServiceClient`** traduce las respuestas: 404 → no existe, 401/403 → acceso denegado, caída o tiempo de espera → 503.
+- Las direcciones se configuran en la sección `Services` de `appsettings.json` de Reservas.
+
+El horario con cupos (`GET /api/bookings/schedule`) también es una llamada síncrona: Reservas pide las sesiones a Clases y les suma los cupos ocupados.
+Y el Gateway consulta a los cuatro microservicios en `GET /api/status` para mostrar su estado en la página de inicio.
+
+## Seguridad con JWT
 
 ```mermaid
 sequenceDiagram
@@ -101,6 +177,8 @@ Todos tienen la contraseña **`FitCupo2026*`** (se lee de `Seed:DefaultPassword`
 | Clases | `POST /api/sessions` | ❌ | ❌ | ✅ | ❌ |
 | Clases | `PATCH /api/sessions/{id}/cancel` | ✅ cualquiera | ❌ | ✅ solo las suyas | ❌ |
 
+Los permisos de Reservas están en la sección [Reservas](#reservas).
+
 ### 401 frente a 403
 
 Los dos errores responden con **ProblemDetails** y un mensaje que explica el motivo:
@@ -116,7 +194,7 @@ Los dos errores responden con **ProblemDetails** y un mensaje que explica el mot
 
 ## Microservicios
 
-Los tres siguen **Clean Architecture**: las dependencias apuntan hacia el centro, el controller solo usa `IMediator`
+Los cuatro siguen **Clean Architecture**: las dependencias apuntan hacia el centro, el controller solo usa `IMediator`
 y los casos de uso están separados en *commands* y *queries* (CQRS).
 
 ```mermaid
@@ -175,6 +253,70 @@ Reglas de negocio:
 - Un cliente inactivo no puede modificar sus datos. No se puede desactivar un cliente inactivo ni activar uno activo.
 - Los clientes no se eliminan: se desactivan para conservar su historial.
 
+### Reservas
+
+| Capa | Proyecto | Contenido |
+|---|---|---|
+| Dominio | `FitCupo.Bookings.Domain` | Agregado `Booking` y value objects `BookableSession` y `BookingClient`, con las reglas de la reserva |
+| Aplicación | `FitCupo.Bookings.Application` | Commands y queries de reservas, contratos `IClassesService` e `IClientsService`, mediador y paginación |
+| Infraestructura | `FitCupo.Bookings.Infrastructure` | Clientes HTTP hacia Clases y Clientes, reenvío del JWT y registro de las llamadas |
+| Persistencia | `FitCupo.Bookings.Persistence` | `BookingsDbContext`, repositorio, Unit of Work y migración |
+| Presentación | `FitCupo.Bookings.API` | `BookingsController`, validación de JWT y manejo de errores (incluye 503) |
+
+Reglas de negocio:
+
+- Solo reserva un cliente **activo** en Clientes, en una sesión **programada y futura** de Clases.
+- No se supera el cupo de la sesión. Un cliente no reserva dos veces la misma sesión ni dos clases a la misma hora.
+- El afiliado reserva para sí mismo; recepción y el administrador reservan indicando el cliente.
+- La reserva se cancela solo antes de que empiece la sesión. El afiliado solo cancela las suyas.
+- La reserva guarda una copia de los datos de la sesión y del cliente para mostrar el historial sin volver a consultarlos.
+- Un índice único filtrado (`SessionId`, `ClientId` con estado `Confirmed`) evita reservas repetidas aunque lleguen dos peticiones al mismo tiempo.
+
+| Endpoint | Admin | Receptionist | Instructor | Member |
+|---|:-:|:-:|:-:|:-:|
+| `GET /api/bookings/schedule` (horario con cupos) | ✅ | ✅ | ✅ | ✅ |
+| `POST /api/bookings` | ✅ para un cliente | ✅ para un cliente | ❌ | ✅ para sí mismo |
+| `GET /api/bookings/me` | ❌ | ❌ | ❌ | ✅ |
+| `GET /api/bookings` | ✅ | ✅ | ❌ | ❌ |
+| `GET /api/bookings/{id}` | ✅ | ✅ | ❌ | ✅ solo las suyas |
+| `PATCH /api/bookings/{id}/cancel` | ✅ | ✅ | ❌ | ✅ solo las suyas |
+| `GET /api/bookings/sessions/{sessionId}` (inscritos) | ✅ | ✅ | ✅ solo sus sesiones | ❌ |
+
+### API Gateway
+
+`gateway/FitCupo.Gateway` usa **YARP** (Yet Another Reverse Proxy). Las rutas están en `appsettings.json`:
+
+| Ruta | Microservicio |
+|---|---|
+| `/api/auth/**`, `/api/users/**` | Identity (5170) |
+| `/api/clients/**` | Clientes (5180) |
+| `/api/classes/**`, `/api/sessions/**` | Clases (5190) |
+| `/api/bookings/**` | Reservas (5200) |
+| `/api/status` | El Gateway responde el estado de los cuatro microservicios |
+
+El Gateway no valida el JWT: lo deja pasar y cada microservicio lo valida, igual que en la Entrega 2.
+También habilita **CORS** para la interfaz web (`http://localhost:5300`).
+
+### Interfaz web
+
+`web/FitCupo.Web` es una aplicación **Blazor WebAssembly** que corre en el navegador y llama al Gateway.
+
+| Página | Ruta | Roles | Microservicios que usa |
+|---|---|---|---|
+| Inicio de sesión | `/login` | Todos | Identity |
+| Inicio y estado de los microservicios | `/` | Todos | Gateway |
+| Clases | `/clases` | Todos | Clases |
+| Horario con cupos | `/horario` | Todos; el afiliado reserva y cancela | Reservas → Clases |
+| Mis reservas | `/mis-reservas` | Afiliado | Clientes y Reservas |
+| Clientes | `/clientes` | Recepción y administrador | Clientes |
+| Reservas | `/reservas` | Recepción y administrador | Clientes y Reservas → Clientes y Clases |
+| Mis sesiones | `/mis-sesiones` | Instructor | Clases y Reservas → Clases |
+
+- El JWT se guarda en el `localStorage` del navegador y se envía en cada petición (`Services/ApiClient.cs`).
+- `Auth/JwtAuthenticationStateProvider.cs` lee los claims del token para mostrar solo las opciones de cada rol.
+- Los errores de los microservicios se muestran con el título y el detalle de su ProblemDetails.
+- Si el token expira, la interfaz vuelve a la pantalla de inicio de sesión.
+
 ## Cómo ejecutarlo
 
 ### Requisitos
@@ -182,7 +324,7 @@ Reglas de negocio:
 - [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0)
 - SQL Server. Sirve **LocalDB**, que se instala con Visual Studio, o SQL Server en Docker.
 
-### Iniciar los tres microservicios
+### Iniciar FitCupo completo
 
 ```bash
 git clone https://github.com/samrx21/fitcupo.git
@@ -190,31 +332,50 @@ cd fitcupo
 scripts\run-all.cmd
 ```
 
-El script abre una ventana por microservicio. También se pueden iniciar a mano, cada uno en su terminal:
+El script abre seis ventanas: los cuatro microservicios, el Gateway y la interfaz web.
+Cuando todas digan `Now listening on`, abre **http://localhost:5300**.
+
+También se pueden iniciar a mano, cada uno en su terminal:
 
 ```bash
 dotnet run --project services/identity/src/Presenters/FitCupo.Identity.API
 dotnet run --project services/clients/src/Presenters/FitCupo.Clients.API
 dotnet run --project services/classes/src/Presenters/FitCupo.Classes.API
+dotnet run --project services/bookings/src/Presenters/FitCupo.Bookings.API
+dotnet run --project gateway/FitCupo.Gateway
+dotnet run --project web/FitCupo.Web
 ```
 
 En Visual Studio, abre `FitCupo.sln`, clic derecho en la solución → **Configurar proyectos de inicio** → **Varios proyectos de inicio**
-y marca las tres API.
+y marca las cuatro API, `FitCupo.Gateway` y `FitCupo.Web`.
 
 Al iniciar en modo Development, cada API **crea su base de datos y aplica las migraciones**.
 Identity, además, **ejecuta los seeders** y muestra en la consola los roles y usuarios que crea.
 
-| Microservicio | Documentación interactiva | Base de datos |
+| Componente | Dirección | Base de datos |
 |---|---|---|
+| Interfaz web | http://localhost:5300 | — |
+| API Gateway | http://localhost:5100/api/status | — |
 | Identity | http://localhost:5170/scalar | `FitCupoIdentity` |
 | Clientes | http://localhost:5180/scalar | `FitCupoClients` |
 | Clases | http://localhost:5190/scalar | `FitCupoClasses` |
+| Reservas | http://localhost:5200/scalar | `FitCupoBookings` |
 
-En Scalar, inicia sesión en Identity, copia el `accessToken` y pégalo en **Authentication → Bearer** de Clientes o Clases.
+En Scalar, inicia sesión en Identity, copia el `accessToken` y pégalo en **Authentication → Bearer** del microservicio que quieras probar.
+
+> **Importante:** abre la terminal **sin** permisos de administrador. Si una ventana de administrador inicia LocalDB,
+> las ventanas normales no pueden conectarse. Si pasa, ejecuta `sqllocaldb stop MSSQLLocalDB -k` en esa ventana de administrador y ciérrala.
+
+### Probar la comunicación síncrona
+
+1. Con todo en ejecución, la afiliada reserva una sesión desde **Horario**. En la ventana de **Reservas** aparecen las llamadas a Clientes y a Clases.
+2. Cierra la ventana de **Clases** (5190).
+3. En la interfaz, el inicio muestra *Clases · no disponible* y el **Horario** responde *Servicio no disponible (503)*.
+4. Vuelve a iniciar Clases y todo funciona de nuevo.
 
 ### Configuración del JWT
 
-Los tres `appsettings.json` comparten la sección `Jwt` (emisor, audiencia y clave de firma). Identity agrega `ExpirationMinutes`.
+Los `appsettings.json` de los microservicios comparten la sección `Jwt` (emisor, audiencia y clave de firma). Identity agrega `ExpirationMinutes`.
 La clave del repositorio es solo para desarrollo; en producción se reemplaza con una variable de entorno,
 sin modificar el archivo:
 
@@ -230,11 +391,11 @@ $env:ConnectionStrings__DefaultConnection = "Server=localhost,1433;Database=FitC
 dotnet run --project services/clients/src/Presenters/FitCupo.Clients.API
 ```
 
-Cambia el nombre de la base de datos (`FitCupoIdentity`, `FitCupoClients` o `FitCupoClasses`) según el microservicio.
+Cambia el nombre de la base de datos (`FitCupoIdentity`, `FitCupoClients`, `FitCupoClasses` o `FitCupoBookings`) según el microservicio.
 
 ### Migraciones
 
-Desde la carpeta de cada microservicio (`services/identity`, `services/clients` o `services/classes`):
+Desde la carpeta de cada microservicio (`services/identity`, `services/clients`, `services/classes` o `services/bookings`):
 
 ```bash
 dotnet tool restore
@@ -272,35 +433,31 @@ scripts\ef.cmd update
 | `release/*` | Preparación de cada entrega antes de pasar a `main` |
 
 Cada integrante trabajó en su rama `feature/*` y la integró a `develop` mediante un **pull request revisado por otro integrante**.
-Cada entrega se publica con una rama `release/x.y.z` que se fusiona en `main` y se etiqueta: `v1.0.0` (Entrega 1) y `v2.0.0` (Entrega 2).
+Cada entrega se publica con una rama `release/x.y.z` que se fusiona en `main` y se etiqueta:
+`v1.0.0` (Entrega 1), `v2.0.0` (Entrega 2) y `v3.0.0` (Entrega final: MVP).
 
 ## Estructura del repositorio
 
 ```
 fitcupo/
-├── FitCupo.sln                      Solución con los tres microservicios
-├── scripts/run-all.cmd              Inicia los tres microservicios
+├── FitCupo.sln                      Solución con todos los proyectos
+├── scripts/run-all.cmd              Inicia los microservicios, el Gateway y la interfaz web
 ├── docs/
 │   ├── arquitectura/                Diagrama de microservicios
 │   ├── postman/                     Colecciones de seguridad y de Clientes
-│   └── evidencias-seguridad.md      Resultados de los escenarios
+│   └── evidencias-seguridad.md      Resultados de los escenarios de seguridad
+├── gateway/
+│   └── FitCupo.Gateway/             API Gateway con YARP (puerto 5100)
+├── web/
+│   └── FitCupo.Web/                 Interfaz web Blazor WebAssembly (puerto 5300)
 └── services/
     ├── identity/                    Microservicio Identity (puerto 5170)
-    │   ├── FitCupo.Identity.sln
-    │   └── src/
-    │       ├── Core/FitCupo.Identity.Application/
-    │       ├── Infrastructure/FitCupo.Identity.Infrastructure/
-    │       └── Presenters/FitCupo.Identity.API/
     ├── clients/                     Microservicio de Clientes (puerto 5180)
-    │   ├── FitCupo.Clients.sln
-    │   └── src/
-    │       ├── Core/FitCupo.Clients.Domain/ y FitCupo.Clients.Application/
-    │       ├── Infrastructure/FitCupo.Clients.Persistence/
-    │       └── Presenters/FitCupo.Clients.API/
-    └── classes/                     Microservicio de Clases (puerto 5190)
-        ├── FitCupo.Classes.sln
+    ├── classes/                     Microservicio de Clases (puerto 5190)
+    └── bookings/                    Microservicio de Reservas (puerto 5200)
+        ├── FitCupo.Bookings.sln
         └── src/
-            ├── Core/FitCupo.Classes.Domain/ y FitCupo.Classes.Application/
-            ├── Infrastructure/FitCupo.Classes.Persistence/
-            └── Presenters/FitCupo.Classes.API/
+            ├── Core/FitCupo.Bookings.Domain/ y FitCupo.Bookings.Application/
+            ├── Infrastructure/FitCupo.Bookings.Infrastructure/ y FitCupo.Bookings.Persistence/
+            └── Presenters/FitCupo.Bookings.API/
 ```
