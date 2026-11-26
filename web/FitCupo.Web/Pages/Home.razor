@@ -1,0 +1,62 @@
+@page "/"
+@attribute [Authorize]
+@inject ApiClient Api
+
+<PageTitle>Inicio · FitCupo</PageTitle>
+
+<AuthorizeView>
+    <h1>Hola, @context.User.Identity?.Name</h1>
+    <p class="subtitle">¿Qué quieres hacer hoy?</p>
+
+    <div class="grid">
+        @if (context.User.IsInRole(Roles.MEMBER))
+        {
+            <a class="card" href="horario"><h2>Reservar una clase</h2><p class="muted">Mira el horario con los cupos disponibles y reserva.</p></a>
+            <a class="card" href="mis-reservas"><h2>Mis reservas</h2><p class="muted">Consulta o cancela tus reservas.</p></a>
+        }
+        <a class="card" href="clases"><h2>Clases</h2><p class="muted">Catálogo de clases grupales del gimnasio.</p></a>
+        <a class="card" href="horario"><h2>Horario</h2><p class="muted">Sesiones de los próximos días con sus cupos.</p></a>
+    </div>
+</AuthorizeView>
+
+<div class="card" style="margin-top:20px">
+    <div class="actions" style="justify-content:space-between">
+        <h2 style="margin:0">Estado de los microservicios</h2>
+        <button class="secondary small" @onclick="LoadStatusAsync">Actualizar</button>
+    </div>
+    <p class="muted">El API Gateway consulta cada microservicio en este momento.</p>
+    <ErrorAlert Error="error" />
+    @if (services is not null)
+    {
+        <div class="status-list">
+            @foreach (ServiceStatus service in services.OrderBy(service => service.Address))
+            {
+                <div class="status-item" title="@service.Address">
+                    <span class="dot @(service.IsAvailable ? "" : "down")"></span>
+                    <strong>@service.Name</strong>
+                    <span class="muted">@(service.IsAvailable ? $"{service.ElapsedMilliseconds} ms" : "no disponible")</span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<ServiceStatus>? services;
+    private ApiException? error;
+
+    protected override Task OnInitializedAsync() => LoadStatusAsync();
+
+    private async Task LoadStatusAsync()
+    {
+        error = null;
+        try
+        {
+            services = await Api.GetAsync<List<ServiceStatus>>("api/status");
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+}

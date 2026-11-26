@@ -1,0 +1,12 @@
+@* Muestra el error que respondió un microservicio (título y detalle del ProblemDetails) *@
+@if (Error is not null)
+{
+    <div class="alert error" role="alert">
+        <strong>@Error.Title@(Error.StatusCode > 0 ? $" ({Error.StatusCode})" : "")</strong>
+        @Error.Detail
+    </div>
+}
+
+@code {
+    [Parameter] public ApiException? Error { get; set; }
+}

@@ -1,0 +1,138 @@
+@page "/mis-reservas"
+@attribute [Authorize(Roles = Roles.MEMBER)]
+@inject ApiClient Api
+
+<PageTitle>Mis reservas · FitCupo</PageTitle>
+
+<h1>Mis reservas</h1>
+<p class="subtitle">Tus reservas en el microservicio de Reservas.</p>
+
+<ErrorAlert Error="error" />
+<SuccessAlert Message="@message" />
+
+@if (profile is not null)
+{
+    <div class="card">
+        <div class="actions" style="justify-content:space-between">
+            <div>
+                <h2 style="margin:0">@profile.FullName</h2>
+                <span class="muted">@Format.DocumentType(profile.DocumentType) @profile.DocumentNumber · @profile.Email · @profile.Phone</span>
+            </div>
+            <span class="badge @(profile.Status == "Active" ? "ok" : "off")">@(profile.Status == "Active" ? "Cliente activo" : "Cliente inactivo")</span>
+        </div>
+    </div>
+}
+
+<div class="toolbar">
+    <label>
+        Mostrar
+        <select @bind="filter" @bind:after="LoadAsync">
+            <option value="upcoming">Próximas confirmadas</option>
+            <option value="all">Todas</option>
+        </select>
+    </label>
+</div>
+
+@if (bookings is null && error is null)
+{
+    <p class="loading">Cargando reservas…</p>
+}
+else if (bookings is not null)
+{
+    <div class="card">
+        @if (bookings.Count == 0)
+        {
+            <p class="empty">No tienes reservas. <a href="horario">Reserva una clase</a>.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr><th>Fecha</th><th>Clase</th><th>Instructor</th><th>Salón</th><th>Estado</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (Booking booking in bookings)
+                    {
+                        <tr>
+                            <td>@Format.DateTime(booking.StartsAt)</td>
+                            <td><strong>@booking.GymClassName</strong></td>
+                            <td>@booking.InstructorName</td>
+                            <td>@booking.Room</td>
+                            <td><span class="badge @(booking.IsConfirmed ? "ok" : "off")">@(booking.IsConfirmed ? "Confirmada" : "Cancelada")</span></td>
+                            <td>
+                                @if (booking.CanBeCancelled)
+                                {
+                                    <button class="danger small" disabled="@busy" @onclick="() => CancelAsync(booking)">Cancelar</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private List<Booking>? bookings;
+    private ClientDetail? profile;
+    private ApiException? error;
+    private string? message;
+    private string filter = "upcoming";
+    private bool busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Perfil del afiliado en el microservicio de Clientes (se busca con el correo del token)
+            profile = await Api.GetAsync<ClientDetail>("api/clients/me");
+        }
+        catch (ApiException exception) when (exception.StatusCode == 404)
+        {
+            error = new ApiException(404, "Aún no eres cliente",
+                "Todavía no estás registrado como cliente del gimnasio. Acércate a recepción para completar tu registro.");
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            string query = filter == "upcoming" ? "?upcomingOnly=true&status=Confirmed&pageSize=50" : "?pageSize=50";
+            PagedResult<Booking> page = await Api.GetAsync<PagedResult<Booking>>($"api/bookings/me{query}");
+            bookings = page.Items;
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+
+    private async Task CancelAsync(Booking booking)
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            await Api.PatchAsync($"api/bookings/{booking.Id}/cancel");
+            message = $"Cancelaste tu reserva de {booking.GymClassName} del {Format.DateTime(booking.StartsAt)}.";
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

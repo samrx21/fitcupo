@@ -1,0 +1,53 @@
+@page "/clases"
+@attribute [Authorize]
+@inject ApiClient Api
+
+<PageTitle>Clases · FitCupo</PageTitle>
+
+<h1>Clases del gimnasio</h1>
+<p class="subtitle">Catálogo del microservicio de Clases.</p>
+
+<ErrorAlert Error="error" />
+
+@if (classes is null && error is null)
+{
+    <p class="loading">Cargando clases…</p>
+}
+else if (classes is not null)
+{
+    <div class="grid">
+        @foreach (GymClass gymClass in classes)
+        {
+            <div class="card">
+                <div class="actions" style="justify-content:space-between">
+                    <h2 style="margin:0">@gymClass.Name</h2>
+                    <span class="badge @(gymClass.IsActive ? "ok" : "off")">@(gymClass.IsActive ? "Activa" : "Inactiva")</span>
+                </div>
+                <p class="muted">@gymClass.Description</p>
+                <div class="actions">
+                    <span class="badge info">@Format.Category(gymClass.Category)</span>
+                    <span class="badge">@gymClass.DurationMinutes min</span>
+                    <span class="badge">Hasta @gymClass.MaxCapacity personas</span>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<GymClass>? classes;
+    private ApiException? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            PagedResult<GymClass> page = await Api.GetAsync<PagedResult<GymClass>>("api/classes?pageSize=50");
+            classes = page.Items;
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+}

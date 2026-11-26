@@ -1,0 +1,77 @@
+@page "/login"
+@layout EmptyLayout
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<PageTitle>Iniciar sesión · FitCupo</PageTitle>
+
+<div class="login-page">
+    <div class="login-box card">
+        <h1>FitCupo</h1>
+        <p class="subtitle">Reserva tu cupo en las clases grupales del gimnasio.</p>
+
+        <ErrorAlert Error="error" />
+
+        <form @onsubmit="LoginAsync">
+            <label>
+                Correo
+                <input type="email" @bind="email" placeholder="correo@fitcupo.com" autocomplete="username" required />
+            </label>
+            <label>
+                Contraseña
+                <input type="password" @bind="password" autocomplete="current-password" required />
+            </label>
+            <button type="submit" disabled="@loading">@(loading ? "Ingresando…" : "Iniciar sesión")</button>
+        </form>
+
+        <p class="muted" style="margin-top:20px">Usuarios de prueba (contraseña <code>FitCupo2026*</code>):</p>
+        <div class="demo-users">
+            @foreach ((string userEmail, string description) in DemoUsers)
+            {
+                <button type="button" class="secondary small" @onclick="() => Fill(userEmail)">@description · @userEmail</button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private const string DEMO_PASSWORD = "FitCupo2026*";
+
+    private static readonly (string Email, string Description)[] DemoUsers =
+    [
+        ("afiliado@fitcupo.com", "Afiliado"),
+        ("recepcion@fitcupo.com", "Recepción"),
+        ("instructor@fitcupo.com", "Instructor"),
+        ("admin@fitcupo.com", "Administrador")
+    ];
+
+    private string email = "";
+    private string password = "";
+    private bool loading;
+    private ApiException? error;
+
+    private void Fill(string userEmail)
+    {
+        email = userEmail;
+        password = DEMO_PASSWORD;
+    }
+
+    private async Task LoginAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            await Auth.LoginAsync(email, password);
+            Navigation.NavigateTo("");
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

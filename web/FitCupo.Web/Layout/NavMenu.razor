@@ -1,0 +1,14 @@
+@* Cada rol ve solo las opciones que puede usar *@
+<AuthorizeView>
+    <Authorized>
+        <nav class="nav">
+            <NavLink href="" Match="NavLinkMatch.All">Inicio</NavLink>
+            <NavLink href="clases">Clases</NavLink>
+            <NavLink href="horario">Horario</NavLink>
+            @if (context.User.IsInRole(Roles.MEMBER))
+            {
+                <NavLink href="mis-reservas">Mis reservas</NavLink>
+            }
+        </nav>
+    </Authorized>
+</AuthorizeView>
