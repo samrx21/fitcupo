@@ -1,0 +1,29 @@
+@inherits LayoutComponentBase
+@inject AuthService Auth
+@inject NavigationManager Navigation
+
+<header class="topbar">
+    <a class="brand" href="">FitCupo</a>
+    <NavMenu />
+    <AuthorizeView>
+        <Authorized>
+            <div class="user">
+                <span>@context.User.Identity?.Name</span>
+                <span class="role">@string.Join(", ", context.User.FindAll("role").Select(role => Roles.ToSpanish(role.Value)))</span>
+                <button class="link" @onclick="LogoutAsync">Cerrar sesión</button>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</header>
+
+<main class="content">
+    @Body
+</main>
+
+@code {
+    private async Task LogoutAsync()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("login");
+    }
+}

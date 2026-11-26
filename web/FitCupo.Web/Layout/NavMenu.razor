@@ -1,0 +1,23 @@
+@* Cada rol ve solo las opciones que puede usar *@
+<AuthorizeView>
+    <Authorized>
+        <nav class="nav">
+            <NavLink href="" Match="NavLinkMatch.All">Inicio</NavLink>
+            <NavLink href="clases">Clases</NavLink>
+            <NavLink href="horario">Horario</NavLink>
+            @if (context.User.IsInRole(Roles.MEMBER))
+            {
+                <NavLink href="mis-reservas">Mis reservas</NavLink>
+            }
+            @if (context.User.IsInRole(Roles.ADMIN) || context.User.IsInRole(Roles.RECEPTIONIST))
+            {
+                <NavLink href="clientes">Clientes</NavLink>
+                <NavLink href="reservas">Reservas</NavLink>
+            }
+            @if (context.User.IsInRole(Roles.INSTRUCTOR))
+            {
+                <NavLink href="mis-sesiones">Mis sesiones</NavLink>
+            }
+        </nav>
+    </Authorized>
+</AuthorizeView>

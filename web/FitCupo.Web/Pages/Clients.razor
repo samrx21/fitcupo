@@ -1,0 +1,219 @@
+@page "/clientes"
+@attribute [Authorize(Roles = Roles.STAFF)]
+@inject ApiClient Api
+
+<PageTitle>Clientes · FitCupo</PageTitle>
+
+<h1>Clientes</h1>
+<p class="subtitle">Afiliados registrados en el microservicio de Clientes.</p>
+
+<ErrorAlert Error="error" />
+<SuccessAlert Message="@message" />
+
+<div class="card">
+    <div class="actions" style="justify-content:space-between">
+        <h2 style="margin:0">Registrar cliente</h2>
+        <button class="secondary small" @onclick="() => showForm = !showForm">@(showForm ? "Ocultar" : "Nuevo cliente")</button>
+    </div>
+    @if (showForm)
+    {
+        <p class="muted">Para que un afiliado pueda reservar, regístralo con el mismo correo con el que inicia sesión.</p>
+        <form class="form" @onsubmit="CreateAsync">
+            <label>Tipo de documento
+                <select @bind="form.DocumentType">
+                    <option value="CitizenshipCard">Cédula de ciudadanía</option>
+                    <option value="ForeignerId">Cédula de extranjería</option>
+                    <option value="IdentityCard">Tarjeta de identidad</option>
+                    <option value="Passport">Pasaporte</option>
+                </select>
+            </label>
+            <label>Número de documento <input @bind="form.DocumentNumber" required /></label>
+            <label>Nombres <input @bind="form.FirstName" required /></label>
+            <label>Apellidos <input @bind="form.LastName" required /></label>
+            <label>Correo <input type="email" @bind="form.Email" required /></label>
+            <label>Teléfono <input @bind="form.Phone" placeholder="3001234567" required /></label>
+            <label>Fecha de nacimiento <input type="date" @bind="form.BirthDate" required /></label>
+            <label>Contacto de emergencia <input @bind="form.EmergencyContactName" required /></label>
+            <label>Teléfono de emergencia <input @bind="form.EmergencyContactPhone" required /></label>
+            <div class="full actions">
+                <button type="submit" disabled="@busy">Registrar cliente</button>
+                <button type="button" class="secondary" @onclick="FillDemo">Llenar con datos del afiliado de prueba</button>
+            </div>
+        </form>
+    }
+</div>
+
+<div class="card">
+    <form class="toolbar" @onsubmit="SearchAsync">
+        <label>Buscar <input @bind="search" placeholder="Nombre, documento o correo" /></label>
+        <label>Estado
+            <select @bind="status">
+                <option value="">Todos</option>
+                <option value="Active">Activos</option>
+                <option value="Inactive">Inactivos</option>
+            </select>
+        </label>
+        <button type="submit">Buscar</button>
+    </form>
+
+    @if (result is null && error is null)
+    {
+        <p class="loading">Cargando clientes…</p>
+    }
+    else if (result is not null && result.Items.Count == 0)
+    {
+        <p class="empty">No hay clientes que coincidan con la búsqueda.</p>
+    }
+    else if (result is not null)
+    {
+        <table>
+            <thead>
+                <tr><th>Nombre</th><th>Documento</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (ClientListItem client in result.Items)
+                {
+                    <tr>
+                        <td><strong>@client.FullName</strong></td>
+                        <td>@Format.DocumentType(client.DocumentType) @client.DocumentNumber</td>
+                        <td>@client.Email</td>
+                        <td>@client.Phone</td>
+                        <td><span class="badge @(client.IsActive ? "ok" : "off")">@(client.IsActive ? "Activo" : "Inactivo")</span></td>
+                        <td>
+                            <div class="actions">
+                                @if (client.IsActive)
+                                {
+                                    <a class="button small" href="reservas?clientId=@client.Id">Reservar</a>
+                                }
+                                <AuthorizeView Roles="@Roles.ADMIN" Context="admin">
+                                    @if (client.IsActive)
+                                    {
+                                        <button class="danger small" disabled="@busy" @onclick="() => ChangeStatusAsync(client, false)">Desactivar</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="secondary small" disabled="@busy" @onclick="() => ChangeStatusAsync(client, true)">Activar</button>
+                                    }
+                                </AuthorizeView>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="actions" style="margin-top:12px">
+            <button class="secondary small" disabled="@(!result.HasPreviousPage)" @onclick="() => GoToAsync(result.PageNumber - 1)">Anterior</button>
+            <span class="muted">Página @result.PageNumber de @Math.Max(result.TotalPages, 1) · @result.TotalCount clientes</span>
+            <button class="secondary small" disabled="@(!result.HasNextPage)" @onclick="() => GoToAsync(result.PageNumber + 1)">Siguiente</button>
+        </div>
+    }
+</div>
+
+@code {
+    private PagedResult<ClientListItem>? result;
+    private ApiException? error;
+    private string? message;
+    private string search = "";
+    private string status = "";
+    private int pageNumber = 1;
+    private bool busy;
+    private bool showForm;
+    private ClientForm form = new();
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task SearchAsync()
+    {
+        pageNumber = 1;
+        await LoadAsync();
+    }
+
+    private async Task GoToAsync(int number)
+    {
+        pageNumber = number;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            string query = $"?pageNumber={pageNumber}&pageSize=10&search={Uri.EscapeDataString(search)}";
+            if (!string.IsNullOrEmpty(status))
+                query += $"&status={status}";
+
+            result = await Api.GetAsync<PagedResult<ClientListItem>>($"api/clients{query}");
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PostAsync("api/clients", form);
+            message = $"Se registró a {form.FirstName} {form.LastName}.";
+            form = new ClientForm();
+            showForm = false;
+        });
+    }
+
+    private async Task ChangeStatusAsync(ClientListItem client, bool activate)
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PatchAsync($"api/clients/{client.Id}/{(activate ? "activate" : "deactivate")}");
+            message = $"{client.FullName} quedó {(activate ? "activo" : "inactivo")}.";
+        });
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            await action();
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    // Datos de la afiliada de prueba (afiliado@fitcupo.com) para la demostración
+    private void FillDemo() => form = new ClientForm
+    {
+        DocumentType = "CitizenshipCard",
+        DocumentNumber = "1037000111",
+        FirstName = "Laura",
+        LastName = "Gómez",
+        Email = "afiliado@fitcupo.com",
+        Phone = "3001112233",
+        BirthDate = new DateOnly(1998, 4, 12),
+        EmergencyContactName = "Marta Gómez",
+        EmergencyContactPhone = "3009998877"
+    };
+
+    private sealed class ClientForm
+    {
+        public string DocumentType { get; set; } = "CitizenshipCard";
+        public string DocumentNumber { get; set; } = "";
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public DateOnly BirthDate { get; set; } = new(2000, 1, 1);
+        public string EmergencyContactName { get; set; } = "";
+        public string EmergencyContactPhone { get; set; } = "";
+    }
+}
