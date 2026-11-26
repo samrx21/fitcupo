@@ -1,0 +1,105 @@
+@identityUrl = http://localhost:5170
+@bookingsUrl = http://localhost:5200
+@password = FitCupo2026*
+
+# Reservas consulta de forma síncrona a Clientes (5180) y a Clases (5190): deben estar en ejecución.
+# Antes de reservar como afiliado, recepción debe registrar a afiliado@fitcupo.com en Clientes
+# y un instructor debe programar una sesión en Clases. Reemplaza {sessionId} y {clientId}.
+# (Visual Studio 2022 17.12 o superior, o la extensión REST Client de VS Code)
+
+### ───────────── Inicio de sesión ─────────────
+
+# @name loginMember
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "afiliado@fitcupo.com", "password": "{{password}}" }
+
+###
+# @name loginReception
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "recepcion@fitcupo.com", "password": "{{password}}" }
+
+###
+# @name loginInstructor
+POST {{identityUrl}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "instructor@fitcupo.com", "password": "{{password}}" }
+
+### ───────────── Horario con cupos (Reservas → Clases) ─────────────
+
+### Horario de los próximos 7 días con los cupos disponibles (200 OK)
+GET {{bookingsUrl}}/api/bookings/schedule
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### ───────────── Reservar (Reservas → Clientes y Clases) ─────────────
+
+### El afiliado reserva para sí mismo (201 Created)
+POST {{bookingsUrl}}/api/bookings
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "sessionId": "{sessionId}" }
+
+### Recepción reserva para un cliente (201 Created)
+POST {{bookingsUrl}}/api/bookings
+Authorization: Bearer {{loginReception.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "sessionId": "{sessionId}", "clientId": "{clientId}" }
+
+### Mis reservas próximas (200 OK)
+GET {{bookingsUrl}}/api/bookings/me?upcomingOnly=true
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### Todas las reservas próximas, solo recepción y administrador (200 OK)
+GET {{bookingsUrl}}/api/bookings?upcomingOnly=true&status=Confirmed
+Authorization: Bearer {{loginReception.response.body.$.accessToken}}
+
+### Inscritos de una sesión del instructor (200 OK; 403 si la sesión es de otro instructor)
+GET {{bookingsUrl}}/api/bookings/sessions/{sessionId}
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+
+### Cancelar una reserva (204 No Content)
+PATCH {{bookingsUrl}}/api/bookings/{bookingId}/cancel
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+
+### ───────────── Errores ─────────────
+
+### Reservar dos veces la misma sesión (409 Conflict)
+POST {{bookingsUrl}}/api/bookings
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "sessionId": "{sessionId}" }
+
+### Sesión que no existe en Clases (404 Not Found)
+POST {{bookingsUrl}}/api/bookings
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "sessionId": "00000000-0000-0000-0000-000000000001" }
+
+### Recepción sin indicar el cliente (400 Bad Request)
+POST {{bookingsUrl}}/api/bookings
+Authorization: Bearer {{loginReception.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "sessionId": "{sessionId}" }
+
+### Instructor intenta reservar (403 Forbidden)
+POST {{bookingsUrl}}/api/bookings
+Authorization: Bearer {{loginInstructor.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "sessionId": "{sessionId}" }
+
+### Sin token (401 Unauthorized)
+GET {{bookingsUrl}}/api/bookings/me
+
+### Con el microservicio de Clases detenido, el horario responde 503 Service Unavailable
+GET {{bookingsUrl}}/api/bookings/schedule
+Authorization: Bearer {{loginMember.response.body.$.accessToken}}
