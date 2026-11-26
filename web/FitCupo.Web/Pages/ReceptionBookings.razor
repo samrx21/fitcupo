@@ -1,0 +1,162 @@
+@page "/reservas"
+@attribute [Authorize(Roles = Roles.STAFF)]
+@inject ApiClient Api
+
+<PageTitle>Reservas · FitCupo</PageTitle>
+
+<h1>Reservas</h1>
+<p class="subtitle">
+    Al reservar, Reservas consulta a Clientes que el cliente exista y esté activo, y a Clases la sesión y su cupo.
+</p>
+
+<ErrorAlert Error="error" />
+<SuccessAlert Message="@message" />
+
+<div class="card">
+    <h2>Reservar para un cliente</h2>
+    <form class="form" @onsubmit="BookAsync">
+        <label>Cliente
+            <select @bind="selectedClientId">
+                <option value="">Selecciona un cliente…</option>
+                @foreach (ClientListItem client in clients)
+                {
+                    <option value="@client.Id">@client.FullName · @Format.DocumentType(client.DocumentType) @client.DocumentNumber@(client.IsActive ? "" : " (inactivo)")</option>
+                }
+            </select>
+        </label>
+        <label class="full">Sesión (próximos 7 días)
+            <select @bind="selectedSessionId">
+                <option value="">Selecciona una sesión…</option>
+                @foreach (AvailableSession session in sessions.Where(session => session.IsScheduled && !session.HasStarted))
+                {
+                    <option value="@session.SessionId">
+                        @Format.DateTime(session.StartsAt) · @session.GymClassName · @session.InstructorName · @session.AvailableSpots de @session.Capacity cupos
+                    </option>
+                }
+            </select>
+        </label>
+        <div class="full actions">
+            <button type="submit" disabled="@(busy || string.IsNullOrEmpty(selectedClientId) || string.IsNullOrEmpty(selectedSessionId))">Reservar</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="actions" style="justify-content:space-between">
+        <h2 style="margin:0">Próximas reservas confirmadas</h2>
+        <button class="secondary small" @onclick="LoadAsync">Actualizar</button>
+    </div>
+    @if (bookings is null)
+    {
+        <p class="loading">Cargando reservas…</p>
+    }
+    else if (bookings.Count == 0)
+    {
+        <p class="empty">No hay reservas próximas.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Fecha</th><th>Clase</th><th>Cliente</th><th>Instructor</th><th>Salón</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (Booking booking in bookings)
+                {
+                    <tr>
+                        <td>@Format.DateTime(booking.StartsAt)</td>
+                        <td><strong>@booking.GymClassName</strong></td>
+                        <td>@booking.ClientName <span class="muted">· @booking.ClientEmail</span></td>
+                        <td>@booking.InstructorName</td>
+                        <td>@booking.Room</td>
+                        <td>
+                            @if (booking.CanBeCancelled)
+                            {
+                                <button class="danger small" disabled="@busy" @onclick="() => CancelAsync(booking)">Cancelar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public Guid? ClientId { get; set; }
+
+    private List<ClientListItem> clients = [];
+    private List<AvailableSession> sessions = [];
+    private List<Booking>? bookings;
+    private string selectedClientId = "";
+    private string selectedSessionId = "";
+    private ApiException? error;
+    private string? message;
+    private bool busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClientId.HasValue)
+            selectedClientId = ClientId.Value.ToString();
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            // Tres microservicios en una misma pantalla: Clientes, Reservas (que consulta a Clases) y Reservas
+            PagedResult<ClientListItem> clientPage = await Api.GetAsync<PagedResult<ClientListItem>>("api/clients?pageSize=50");
+            clients = clientPage.Items;
+            sessions = await Api.GetAsync<List<AvailableSession>>("api/bookings/schedule");
+            PagedResult<Booking> bookingPage = await Api.GetAsync<PagedResult<Booking>>(
+                "api/bookings?upcomingOnly=true&status=Confirmed&pageSize=50");
+            bookings = bookingPage.Items;
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+
+    private async Task BookAsync()
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PostAsync("api/bookings", new { sessionId = Guid.Parse(selectedSessionId), clientId = Guid.Parse(selectedClientId) });
+            ClientListItem? client = clients.FirstOrDefault(item => item.Id.ToString() == selectedClientId);
+            message = $"Se reservó el cupo para {client?.FullName}.";
+            selectedSessionId = "";
+        });
+    }
+
+    private async Task CancelAsync(Booking booking)
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PatchAsync($"api/bookings/{booking.Id}/cancel");
+            message = $"Se canceló la reserva de {booking.ClientName} en {booking.GymClassName}.";
+        });
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            await action();
+            await LoadAsync();
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}
