@@ -1,0 +1,231 @@
+@page "/mis-sesiones"
+@attribute [Authorize(Roles = Roles.INSTRUCTOR)]
+@inject ApiClient Api
+@inject AuthenticationStateProvider AuthenticationState
+
+<PageTitle>Mis sesiones · FitCupo</PageTitle>
+
+<h1>Mis sesiones</h1>
+<p class="subtitle">Programa tus sesiones en Clases y consulta quién reservó en Reservas.</p>
+
+<ErrorAlert Error="error" />
+<SuccessAlert Message="@message" />
+
+<div class="card">
+    <h2>Programar una sesión</h2>
+    <form class="form" @onsubmit="ScheduleAsync">
+        <label>Clase
+            <select @bind="form.GymClassId">
+                <option value="">Selecciona una clase…</option>
+                @foreach (GymClass gymClass in classes.Where(gymClass => gymClass.IsActive))
+                {
+                    <option value="@gymClass.Id">@gymClass.Name · @gymClass.DurationMinutes min · máx. @gymClass.MaxCapacity</option>
+                }
+            </select>
+        </label>
+        <label>Salón <input @bind="form.Room" placeholder="Salón 1" required /></label>
+        <label>Fecha y hora <input type="datetime-local" @bind="form.StartsAt" required /></label>
+        <label>Cupos (opcional) <input type="number" min="1" @bind="form.Capacity" placeholder="Aforo de la clase" /></label>
+        <div class="full actions">
+            <button type="submit" disabled="@(busy || string.IsNullOrEmpty(form.GymClassId))">Programar sesión</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="actions" style="justify-content:space-between">
+        <h2 style="margin:0">Mis próximas sesiones (30 días)</h2>
+        <button class="secondary small" @onclick="LoadSessionsAsync">Actualizar</button>
+    </div>
+    @if (sessions is null)
+    {
+        <p class="loading">Cargando sesiones…</p>
+    }
+    else if (sessions.Count == 0)
+    {
+        <p class="empty">No tienes sesiones programadas.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr><th>Fecha</th><th>Clase</th><th>Salón</th><th>Cupos</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (ClassSession session in sessions)
+                {
+                    <tr>
+                        <td>@Format.DateTime(session.StartsAt)</td>
+                        <td><strong>@session.GymClassName</strong></td>
+                        <td>@session.Room</td>
+                        <td>@session.Capacity</td>
+                        <td>
+                            <span class="badge @(session.IsScheduled ? "ok" : "off")" title="@session.CancellationReason">
+                                @(session.IsScheduled ? "Programada" : "Cancelada")
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="secondary small" @onclick="() => ShowBookingsAsync(session.Id)">Inscritos</button>
+                                @if (session.IsScheduled && session.StartsAt > DateTime.UtcNow)
+                                {
+                                    <button class="danger small" disabled="@busy" @onclick="() => CancelAsync(session)">Cancelar</button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (attendees is not null)
+{
+    <div class="card">
+        <div class="actions" style="justify-content:space-between">
+            <h2 style="margin:0">Inscritos · @attendees.GymClassName · @Format.DateTime(attendees.StartsAt)</h2>
+            <button class="secondary small" @onclick="() => attendees = null">Cerrar</button>
+        </div>
+        <p class="muted">@attendees.ReservedSpots reservados · @attendees.AvailableSpots disponibles de @attendees.Capacity</p>
+        @if (attendees.Bookings.Count == 0)
+        {
+            <p class="empty">Nadie ha reservado esta sesión todavía.</p>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>#</th><th>Cliente</th><th>Correo</th><th>Reservó</th></tr></thead>
+                <tbody>
+                    @for (int index = 0; index < attendees.Bookings.Count; index++)
+                    {
+                        Booking booking = attendees.Bookings[index];
+                        <tr>
+                            <td>@(index + 1)</td>
+                            <td>@booking.ClientName</td>
+                            <td>@booking.ClientEmail</td>
+                            <td>@Format.DateTime(booking.BookedAt)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private const int DAYS_AHEAD = 30;
+    private const string CANCEL_REASON = "Cancelada por el instructor desde FitCupo Web";
+
+    private List<GymClass> classes = [];
+    private List<ClassSession>? sessions;
+    private SessionBookings? attendees;
+    private SessionForm form = new();
+    private ApiException? error;
+    private string? message;
+    private bool busy;
+    private string instructorId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState state = await AuthenticationState.GetAuthenticationStateAsync();
+        instructorId = state.User.FindFirst("sub")?.Value ?? "";
+
+        try
+        {
+            PagedResult<GymClass> page = await Api.GetAsync<PagedResult<GymClass>>("api/classes?pageSize=50");
+            classes = page.Items;
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+
+        await LoadSessionsAsync();
+    }
+
+    private async Task LoadSessionsAsync()
+    {
+        try
+        {
+            string from = Uri.EscapeDataString(DateTimeOffset.Now.ToString("O"));
+            string to = Uri.EscapeDataString(DateTimeOffset.Now.AddDays(DAYS_AHEAD).ToString("O"));
+            PagedResult<ClassSession> page = await Api.GetAsync<PagedResult<ClassSession>>(
+                $"api/sessions?instructorId={instructorId}&from={from}&to={to}&pageSize=50");
+            sessions = page.Items;
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+
+    private async Task ScheduleAsync()
+    {
+        await RunAsync(async () =>
+        {
+            // La hora que escribe el instructor es local; se envía con su zona horaria
+            DateTimeOffset startsAt = new(DateTime.SpecifyKind(form.StartsAt, DateTimeKind.Local));
+            await Api.PostAsync("api/sessions", new
+            {
+                gymClassId = Guid.Parse(form.GymClassId),
+                room = form.Room,
+                startsAt,
+                capacity = form.Capacity
+            });
+            message = $"Se programó la sesión del {Format.DateTime(startsAt.UtcDateTime)} en {form.Room}.";
+            form = new SessionForm();
+        });
+    }
+
+    private async Task CancelAsync(ClassSession session)
+    {
+        await RunAsync(async () =>
+        {
+            await Api.PatchAsync($"api/sessions/{session.Id}/cancel", new { reason = CANCEL_REASON });
+            message = $"Se canceló la sesión de {session.GymClassName} del {Format.DateTime(session.StartsAt)}.";
+        });
+    }
+
+    private async Task ShowBookingsAsync(Guid sessionId)
+    {
+        error = null;
+        try
+        {
+            // Reservas consulta a Clases quién dicta la sesión antes de mostrar los inscritos
+            attendees = await Api.GetAsync<SessionBookings>($"api/bookings/sessions/{sessionId}");
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+    }
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        busy = true;
+        error = null;
+        message = null;
+        try
+        {
+            await action();
+            await LoadSessionsAsync();
+        }
+        catch (ApiException exception)
+        {
+            error = exception;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private sealed class SessionForm
+    {
+        public string GymClassId { get; set; } = "";
+        public string Room { get; set; } = "";
+        public DateTime StartsAt { get; set; } = DateTime.Today.AddDays(1).AddHours(7);
+        public int? Capacity { get; set; }
+    }
+}
